@@ -1,0 +1,1 @@
+1. To know project tree structure : tree -I 'node_modules|.next|.git|.gitignore'
