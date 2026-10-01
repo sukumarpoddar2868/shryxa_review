@@ -1,0 +1,436 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  overflow: hidden;
+  background: #f7f8f5;
+  color: #1d3824;
+}
+
+.backgroundGlow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  top: -260px;
+  right: -180px;
+  border-radius: 50%;
+  background: rgba(93, 139, 103, 0.12);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 430px;
+}
+
+/* -------------------------------------------------
+   BRAND
+------------------------------------------------- */
+
+.brandSection {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.logoBox {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  border: 1px solid rgba(29, 56, 36, 0.18);
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 5px 18px rgba(29, 56, 36, 0.08);
+
+  overflow: hidden;
+}
+
+.logoBox img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.brandName {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #1d3824;
+}
+
+.tagline {
+  margin: 12px 0 0;
+  color: #68746b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------
+   CARD
+------------------------------------------------- */
+
+.card {
+  width: 100%;
+  padding: 34px;
+
+  border: 1px solid rgba(29, 56, 36, 0.10);
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  box-shadow:
+    0 20px 60px rgba(29, 56, 36, 0.08);
+
+  backdrop-filter: blur(12px);
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.header h1 {
+  margin: 0;
+  color: #1d3824;
+  font-size: 27px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.header p {
+  margin: 8px 0 0;
+  color: #788179;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------
+   FORM
+------------------------------------------------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  color: #344239;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+  height: 48px;
+
+  padding: 0 14px;
+
+  border: 1px solid #d9ded9;
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #1d3824;
+
+  font-size: 15px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+
+  box-sizing: border-box;
+}
+
+.field input::placeholder {
+  color: #a1aaa3;
+}
+
+.field input:hover {
+  border-color: #bcc6be;
+}
+
+.field input:focus {
+  border-color: #5c8b67;
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(92, 139, 103, 0.12);
+}
+
+/* -------------------------------------------------
+   PASSWORD
+------------------------------------------------- */
+
+.passwordHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.passwordHeader label {
+  color: #344239;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.forgotButton {
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #4e7e5a;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
+}
+
+.forgotButton:hover {
+  color: #31583b;
+  text-decoration: underline;
+}
+
+.passwordWrapper {
+  position: relative;
+}
+
+.passwordWrapper input {
+  padding-right: 68px;
+}
+
+.showButton {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+
+  transform: translateY(-50%);
+
+  padding: 4px;
+
+  border: 0;
+  background: transparent;
+
+  color: #6d776f;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.showButton:hover {
+  color: #1d3824;
+}
+
+/* -------------------------------------------------
+   LOGIN BUTTON
+------------------------------------------------- */
+
+.loginButton {
+  width: 100%;
+  height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  margin-top: 4px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #1d3824;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 20px rgba(29, 56, 36, 0.16);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.loginButton span {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.loginButton:hover {
+  background: #294c32;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 24px rgba(29, 56, 36, 0.20);
+}
+
+.loginButton:active {
+  transform: translateY(0);
+}
+
+/* -------------------------------------------------
+   SIGNUP
+------------------------------------------------- */
+
+.signupSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  margin-top: 24px;
+
+  color: #788179;
+  font-size: 14px;
+  text-align: center;
+}
+
+.signupButton {
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #4e7e5a;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.signupButton:hover {
+  color: #31583b;
+  text-decoration: underline;
+}
+
+/* -------------------------------------------------
+   FOOTER
+------------------------------------------------- */
+
+.footer {
+  margin: 22px 0 0;
+
+  color: #99a19b;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+/* -------------------------------------------------
+   MOBILE
+------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .page {
+    align-items: flex-start;
+    padding: 32px 16px;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .brandSection {
+    margin-bottom: 22px;
+  }
+
+  .card {
+    padding: 26px 20px;
+    border-radius: 18px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .signupSection {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .page {
+    padding: 24px 12px;
+  }
+
+  .card {
+    padding: 22px 16px;
+  }
+
+  .passwordHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .forgotButton {
+    font-size: 12px;
+  }
+}
+
+/* -------------------------------------------------
+   REDUCED MOTION
+------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .field input,
+  .loginButton,
+  .forgotButton {
+    transition: none;
+  }
+}
+
+
