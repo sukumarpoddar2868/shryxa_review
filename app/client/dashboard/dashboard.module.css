@@ -1,0 +1,976 @@
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+.dashboard {
+  min-height: 100vh;
+  background: #f7f9f7;
+  color: #183321;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 250px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 28px 18px;
+
+  background: #ffffff;
+  border-right: 1px solid #e7ece8;
+
+  z-index: 100;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 4px 10px 30px;
+
+  text-decoration: none;
+
+  color: #173522;
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.brandText {
+  letter-spacing: -0.4px;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.logoBox {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  border: 1px solid rgba(29, 56, 36, 0.18);
+
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+.logoBox img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  border-radius: 7px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  flex: 1;
+}
+
+
+.navItem {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #617064;
+
+  font-family: inherit;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navItem:hover {
+  background: #f2f6f3;
+  color: #214b2e;
+}
+
+.navItem.active {
+  background: #eaf3ec;
+  color: #1f6334;
+  font-weight: 600;
+}
+
+
+.navIcon {
+  width: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
+
+.sidebarBottom {
+  padding-top: 20px;
+
+  border-top: 1px solid #edf0ed;
+}
+
+
+.logoutButton {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #6a746d;
+
+  font-family: inherit;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.logoutButton:hover {
+  background: #f8eeee;
+  color: #a63d3d;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+  min-height: 100vh;
+
+  margin-left: 250px;
+
+  padding: 42px 48px 60px;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  margin-bottom: 48px;
+}
+
+
+.eyebrow {
+  margin: 0 0 8px;
+
+  color: #72907a;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.topBar h1 {
+  margin: 0;
+
+  color: #173522;
+
+  font-size: 34px;
+  font-weight: 700;
+
+  letter-spacing: -1px;
+}
+
+
+.businessName {
+  margin: 7px 0 0;
+
+  color: #6b786f;
+
+  font-size: 15px;
+}
+
+
+.profileCircle {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e5f0e8;
+
+  color: #285d38;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.rechargeSection {
+  margin-bottom: 24px;
+}
+
+
+.sectionHeader {
+  margin-bottom: 18px;
+}
+
+
+.sectionEyebrow {
+  margin: 0 0 7px;
+
+  color: #78907e;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.sectionHeader h2,
+.qrSection h2 {
+  margin: 0;
+
+  color: #1a3823;
+
+  font-size: 21px;
+  font-weight: 650;
+
+  letter-spacing: -0.4px;
+}
+
+
+.sectionHeader p,
+.qrSection p {
+  margin: 7px 0 0;
+
+  color: #758078;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   RECHARGE CARD
+========================================================= */
+
+.rechargeCard {
+  padding: 28px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5ebe6;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 30px rgba(26, 56, 35, 0.04);
+}
+
+
+/* =========================================================
+   MONTHLY PROGRESS
+========================================================= */
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.progressInfo {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+
+.label {
+  color: #6d786f;
+
+  font-size: 13px;
+}
+
+
+.progressInfo strong {
+  color: #193923;
+
+  font-size: 16px;
+  font-weight: 650;
+}
+
+
+.percentage {
+  color: #376a46;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   MONTHLY USAGE BAR
+========================================================= */
+
+.progressTrack {
+  width: 100%;
+  height: 10px;
+
+  margin-top: 16px;
+
+  overflow: hidden;
+
+  background: #e9eeea;
+
+  border-radius: 999px;
+}
+
+
+.progressBar {
+  height: 100%;
+
+  background: #3f7b50;
+
+  border-radius: 999px;
+
+  transition: width 0.4s ease;
+}
+
+
+.progressFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 10px;
+
+  color: #849087;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   RECHARGE BOTTOM
+========================================================= */
+
+.rechargeBottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-top: 30px;
+
+  padding-top: 26px;
+
+  border-top: 1px solid #edf0ed;
+}
+
+
+/* =========================================================
+   REMAINING RECHARGE
+========================================================= */
+
+.remainingContainer {
+  min-width: 0;
+
+  flex: 1;
+}
+
+
+.remainingLabel {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #7b867e;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  letter-spacing: 0.3px;
+}
+
+
+.remainingNumber {
+  color: #183722;
+
+  font-size: 29px;
+  font-weight: 700;
+
+  letter-spacing: -0.8px;
+}
+
+
+.remainingNumber span {
+  color: #7b867e;
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  letter-spacing: 0;
+}
+
+
+/* =========================================================
+   REMAINING RECHARGE COLOR BAR
+========================================================= */
+
+.remainingProgressTrack {
+  width: 100%;
+  max-width: 500px;
+
+  height: 10px;
+
+  margin-top: 14px;
+
+  overflow: hidden;
+
+  background: #edf0ee;
+
+  border-radius: 999px;
+}
+
+
+.remainingProgressBar {
+  height: 100%;
+
+  border-radius: 999px;
+
+  transition:
+    width 0.4s ease,
+    background-color 0.3s ease;
+}
+
+
+/* 0% - 20% */
+
+.barRed {
+  background: #ef4444;
+}
+
+
+/* 21% - 50% */
+
+.barOrange {
+  background: #f59e0b;
+}
+
+
+/* 51% - 80% */
+
+.barLightBlue {
+  background: #7dd3fc;
+}
+
+
+/* 81% - 100% */
+
+.barBlue {
+  background: #3b82f6;
+}
+
+
+/* =========================================================
+   RECHARGE BUTTON
+========================================================= */
+
+.rechargeButton {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  min-height: 44px;
+
+  padding: 0 20px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background: #1f6334;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.rechargeButton:hover {
+  background: #174d28;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 18px rgba(31, 99, 52, 0.18);
+}
+
+
+.rechargeButton span {
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   QR SECTION
+========================================================= */
+
+.qrSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  padding: 24px 28px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5ebe6;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 30px rgba(26, 56, 35, 0.03);
+}
+
+
+.secondaryButton {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  min-height: 42px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d7e1d9;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #285d38;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background: #f4f8f5;
+
+  border-color: #b9cbbd;
+}
+
+
+.secondaryButton span {
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   MOBILE HEADER
+========================================================= */
+
+.mobileHeader {
+  display: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main {
+    margin-left: 220px;
+
+    padding: 35px 30px 50px;
+  }
+
+  .rechargeBottom {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .remainingProgressTrack {
+    max-width: none;
+  }
+
+  .rechargeButton {
+    align-self: flex-start;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .mobileHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 20px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e7ece8;
+
+    z-index: 200;
+
+    box-sizing: border-box;
+  }
+
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #173522;
+
+    font-size: 19px;
+    font-weight: 700;
+
+    text-decoration: none;
+  }
+
+
+  .mobileBrand .logoBox {
+    width: 38px;
+    height: 38px;
+  }
+
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dfe7e1;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #284c32;
+
+    font-size: 22px;
+
+    cursor: pointer;
+  }
+
+
+  .sidebar {
+    top: 70px;
+
+    width: 250px;
+    height: calc(100vh - 70px);
+
+    padding: 24px 18px;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.25s ease;
+
+    box-shadow:
+      10px 0 30px rgba(20, 50, 30, 0.08);
+  }
+
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+
+  .sidebar .brand {
+    display: none;
+  }
+
+
+  .main {
+    margin-left: 0;
+
+    padding: 105px 22px 45px;
+  }
+
+
+  .topBar {
+    margin-bottom: 35px;
+  }
+
+
+  .topBar h1 {
+    font-size: 29px;
+  }
+
+
+  .rechargeCard {
+    padding: 22px;
+  }
+
+
+  .qrSection {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    padding: 22px;
+  }
+
+
+  .secondaryButton {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .mobileHeader {
+    padding: 0 15px;
+  }
+
+
+  .main {
+    padding: 95px 15px 35px;
+  }
+
+
+  .topBar {
+    margin-bottom: 28px;
+  }
+
+
+  .topBar h1 {
+    font-size: 26px;
+  }
+
+
+  .profileCircle {
+    width: 40px;
+    height: 40px;
+
+    font-size: 14px;
+  }
+
+
+  .sectionHeader h2,
+  .qrSection h2 {
+    font-size: 19px;
+  }
+
+
+  .rechargeCard {
+    padding: 18px;
+  }
+
+
+  .progressHeader {
+    align-items: flex-start;
+  }
+
+
+  .progressInfo {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 4px;
+  }
+
+
+  .progressFooter {
+    font-size: 11px;
+  }
+
+
+  .rechargeBottom {
+    gap: 22px;
+
+    margin-top: 25px;
+
+    padding-top: 22px;
+  }
+
+
+  .remainingNumber {
+    font-size: 27px;
+  }
+
+
+  .rechargeButton {
+    width: 100%;
+  }
+
+
+  .qrSection {
+    padding: 18px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .navItem,
+  .rechargeButton,
+  .secondaryButton,
+  .sidebar,
+  .progressBar,
+  .remainingProgressBar {
+    transition: none;
+  }
+}

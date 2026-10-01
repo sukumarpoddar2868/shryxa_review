@@ -1,0 +1,823 @@
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page {
+  min-height: 100vh;
+
+  background: #f7f9f7;
+
+  color: #183321;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 250px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 28px 18px;
+
+  background: #ffffff;
+
+  border-right: 1px solid #e7ece8;
+
+  z-index: 100;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 4px 10px 30px;
+
+  color: #173522;
+
+  text-decoration: none;
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+
+.logoBox {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  border: 1px solid rgba(29, 56, 36, 0.18);
+
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+
+.logoBox img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  border-radius: 7px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  flex: 1;
+}
+
+
+.navItem {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border-radius: 11px;
+
+  color: #617064;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+
+.navItem:hover {
+  background: #f2f6f3;
+
+  color: #214b2e;
+}
+
+
+.navItem.active {
+  background: #eaf3ec;
+
+  color: #1f6334;
+
+  font-weight: 600;
+}
+
+
+.navIcon {
+  width: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
+
+.sidebarBottom {
+  padding-top: 20px;
+
+  border-top: 1px solid #edf0ed;
+}
+
+
+.logoutButton {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #6a746d;
+
+  font-family: inherit;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.logoutButton:hover {
+  background: #f8eeee;
+
+  color: #a63d3d;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+  min-height: 100vh;
+
+  margin-left: 250px;
+
+  padding: 42px 48px 60px;
+}
+
+
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  margin-bottom: 35px;
+}
+
+
+.eyebrow {
+  margin: 0 0 8px;
+
+  color: #72907a;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.topBar h1 {
+  margin: 0;
+
+  color: #173522;
+
+  font-size: 34px;
+  font-weight: 700;
+
+  letter-spacing: -1px;
+}
+
+
+.businessName {
+  margin: 7px 0 0;
+
+  color: #6b786f;
+
+  font-size: 15px;
+}
+
+
+.profileCircle {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e5f0e8;
+
+  color: #285d38;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.card {
+  max-width: 1050px;
+
+  margin-bottom: 22px;
+
+  padding: 28px 30px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5ebe6;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 30px rgba(26, 56, 35, 0.04);
+}
+
+
+.cardHeader {
+  margin-bottom: 25px;
+}
+
+
+.sectionEyebrow {
+  margin: 0 0 7px;
+
+  color: #78907e;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.cardHeader h2 {
+  margin: 0;
+
+  color: #1a3823;
+
+  font-size: 21px;
+  font-weight: 650;
+
+  letter-spacing: -0.3px;
+}
+
+
+.cardHeader p {
+  margin: 7px 0 0;
+
+  color: #758078;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.formGrid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.field label {
+  margin-bottom: 8px;
+
+  color: #425249;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+.field input,
+.field textarea {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  border: 1px solid #dfe7e1;
+
+  border-radius: 9px;
+
+  background: #fbfcfb;
+
+  color: #213d2a;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  outline: none;
+
+  box-sizing: border-box;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.field input:focus,
+.field textarea:focus {
+  border-color: #6f9d7a;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(63, 123, 80, 0.08);
+}
+
+
+.field textarea {
+  resize: vertical;
+
+  min-height: 85px;
+}
+
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+
+.helperText {
+  margin-top: 7px;
+
+  color: #8a948d;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+.securityRow {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  padding: 17px;
+
+  border: 1px solid #edf1ed;
+
+  border-radius: 12px;
+
+  background: #fafcfb;
+}
+
+
+.securityRow strong {
+  display: block;
+
+  color: #294532;
+
+  font-size: 13px;
+}
+
+
+.securityRow p {
+  margin: 5px 0 0;
+
+  color: #7a847d;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.secondaryButton {
+  min-height: 40px;
+
+  padding: 0 15px;
+
+  border: 1px solid #dce5de;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #365540;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.secondaryButton:hover {
+  background: #f3f7f4;
+
+  border-color: #c7d7cb;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
+
+.formActions {
+  max-width: 1050px;
+
+  display: flex;
+  justify-content: flex-end;
+
+  padding-top: 3px;
+}
+
+
+.saveButton {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 0 22px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background: #1f6334;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.saveButton:hover {
+  background: #174d28;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px rgba(31, 99, 52, 0.16);
+}
+
+
+.saveButton span {
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   MOBILE HEADER
+========================================================= */
+
+.mobileHeader {
+  display: none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main {
+    margin-left: 220px;
+
+    padding: 35px 30px 50px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .mobileHeader {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 20px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e7ece8;
+
+    z-index: 200;
+
+    box-sizing: border-box;
+  }
+
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #173522;
+
+    font-size: 19px;
+    font-weight: 700;
+
+    text-decoration: none;
+  }
+
+
+  .mobileBrand .logoBox {
+    width: 38px;
+    height: 38px;
+  }
+
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dfe7e1;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #284c32;
+
+    font-size: 22px;
+
+    cursor: pointer;
+  }
+
+
+  .sidebar {
+    top: 70px;
+
+    width: 250px;
+    height: calc(100vh - 70px);
+
+    padding: 24px 18px;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.25s ease;
+
+    box-shadow:
+      10px 0 30px rgba(20, 50, 30, 0.08);
+  }
+
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+
+  .sidebar .brand {
+    display: none;
+  }
+
+
+  .main {
+    margin-left: 0;
+
+    padding: 105px 22px 45px;
+  }
+
+
+  .topBar {
+    margin-bottom: 30px;
+  }
+
+
+  .topBar h1 {
+    font-size: 29px;
+  }
+
+
+  .card {
+    padding: 23px;
+  }
+
+
+  .formGrid {
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+  }
+
+
+  .fullWidth {
+    grid-column: auto;
+  }
+
+
+  .securityRow {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .formActions {
+    justify-content: stretch;
+  }
+
+
+  .saveButton {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .mobileHeader {
+    padding: 0 15px;
+  }
+
+
+  .main {
+    padding: 95px 15px 35px;
+  }
+
+
+  .topBar h1 {
+    font-size: 26px;
+  }
+
+
+  .profileCircle {
+    width: 40px;
+    height: 40px;
+  }
+
+
+  .card {
+    padding: 20px 18px;
+
+    border-radius: 15px;
+  }
+
+
+  .cardHeader h2 {
+    font-size: 19px;
+  }
+
+
+  .field input,
+  .field textarea {
+    font-size: 12px;
+  }
+
+
+  .secondaryButton {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .navItem,
+  .sidebar,
+  .field input,
+  .field textarea,
+  .secondaryButton,
+  .saveButton {
+    transition: none;
+  }
+}

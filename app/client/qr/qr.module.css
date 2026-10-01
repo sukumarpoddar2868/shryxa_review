@@ -1,0 +1,967 @@
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page {
+  min-height: 100vh;
+
+  background: #f7f9f7;
+
+  color: #183321;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 250px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 28px 18px;
+
+  background: #ffffff;
+
+  border-right: 1px solid #e7ece8;
+
+  z-index: 100;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 4px 10px 30px;
+
+  color: #173522;
+
+  text-decoration: none;
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.logoBox {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  border: 1px solid rgba(29, 56, 36, 0.18);
+
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+.logoBox img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  border-radius: 7px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  flex: 1;
+}
+
+
+.navItem {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border-radius: 11px;
+
+  color: #617064;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.navItem:hover {
+  background: #f2f6f3;
+
+  color: #214b2e;
+}
+
+
+.navItem.active {
+  background: #eaf3ec;
+
+  color: #1f6334;
+
+  font-weight: 600;
+}
+
+
+.navIcon {
+  width: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
+
+.sidebarBottom {
+  padding-top: 20px;
+
+  border-top: 1px solid #edf0ed;
+}
+
+
+.logoutButton {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 13px 14px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #6a746d;
+
+  font-family: inherit;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background: #f8eeee;
+
+  color: #a63d3d;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+  min-height: 100vh;
+
+  margin-left: 250px;
+
+  padding: 42px 48px 60px;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  margin-bottom: 42px;
+}
+
+
+.eyebrow {
+  margin: 0 0 8px;
+
+  color: #72907a;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.topBar h1 {
+  margin: 0;
+
+  color: #173522;
+
+  font-size: 34px;
+  font-weight: 700;
+
+  letter-spacing: -1px;
+}
+
+
+.businessName {
+  margin: 7px 0 0;
+
+  color: #6b786f;
+
+  font-size: 15px;
+}
+
+
+.profileCircle {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e5f0e8;
+
+  color: #285d38;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   QR CARD
+========================================================= */
+
+.qrCard {
+  max-width: 1050px;
+
+  display: grid;
+
+  grid-template-columns: 420px 1fr;
+
+  gap: 60px;
+
+  padding: 42px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5ebe6;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 8px 30px rgba(26, 56, 35, 0.04);
+}
+
+
+/* =========================================================
+   QR PREVIEW
+========================================================= */
+
+.qrPreviewSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  justify-content: center;
+}
+
+
+.qrBox {
+  width: 310px;
+  height: 310px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8e2;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 10px 30px rgba(20, 50, 30, 0.06);
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   FAKE QR
+   Temporary visual until real QR generation is connected.
+========================================================= */
+
+.fakeQr {
+  position: relative;
+
+  width: 255px;
+  height: 255px;
+
+  background:
+    repeating-linear-gradient(0deg,
+      #183321 0px,
+      #183321 5px,
+      transparent 5px,
+      transparent 10px),
+    repeating-linear-gradient(90deg,
+      #183321 0px,
+      #183321 5px,
+      transparent 5px,
+      transparent 10px);
+
+  overflow: hidden;
+}
+
+
+.qrPattern {
+  position: absolute;
+
+  inset: 20px;
+
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 7px;
+
+  padding: 18px;
+
+  background: #ffffff;
+}
+
+
+.qrPattern span {
+  display: block;
+
+  min-height: 24px;
+
+  background: #183321;
+}
+
+
+.qrPattern span:nth-child(2),
+.qrPattern span:nth-child(5),
+.qrPattern span:nth-child(8),
+.qrPattern span:nth-child(11),
+.qrPattern span:nth-child(14) {
+  background: transparent;
+}
+
+
+/* QR corner markers */
+
+.qrCornerTopLeft,
+.qrCornerTopRight,
+.qrCornerBottomLeft {
+  position: absolute;
+
+  width: 55px;
+  height: 55px;
+
+  border: 9px solid #183321;
+
+  background: #ffffff;
+
+  z-index: 2;
+}
+
+
+.qrCornerTopLeft {
+  top: 8px;
+  left: 8px;
+}
+
+
+.qrCornerTopRight {
+  top: 8px;
+  right: 8px;
+}
+
+
+.qrCornerBottomLeft {
+  bottom: 8px;
+  left: 8px;
+}
+
+
+/* =========================================================
+   ACTIVE STATUS
+========================================================= */
+
+.activeStatus {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-top: 18px;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  background: #edf8ef;
+
+  color: #2e7040;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #35a853;
+}
+
+
+/* =========================================================
+   QR INFORMATION
+========================================================= */
+
+.qrInfo {
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+}
+
+
+.sectionEyebrow {
+  margin: 0 0 8px;
+
+  color: #78907e;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+
+.qrInfo h2 {
+  margin: 0;
+
+  color: #1a3823;
+
+  font-size: 27px;
+  font-weight: 650;
+
+  letter-spacing: -0.6px;
+}
+
+
+.description {
+  max-width: 500px;
+
+  margin: 10px 0 30px;
+
+  color: #758078;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   INFORMATION ITEMS
+========================================================= */
+
+.infoItem {
+  padding: 16px 0;
+
+  border-top: 1px solid #edf0ed;
+}
+
+
+.infoItem:last-of-type {
+  border-bottom: 1px solid #edf0ed;
+}
+
+
+.infoItem>span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #8a948d;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  letter-spacing: 0.5px;
+}
+
+
+.infoItem strong {
+  color: #274c31;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.urlBox {
+  max-width: 100%;
+
+  overflow: hidden;
+
+  color: #5c6d61;
+
+  font-size: 13px;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 28px;
+}
+
+
+.downloadButton,
+.secondaryButton {
+  min-height: 44px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 0 18px;
+
+  border-radius: 10px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.downloadButton {
+  border: 0;
+
+  background: #1f6334;
+
+  color: #ffffff;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.downloadButton:hover {
+  background: #174d28;
+
+  transform: translateY(-1px);
+}
+
+
+.secondaryButton {
+  border: 1px solid #d7e1d9;
+
+  background: #ffffff;
+
+  color: #285d38;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.secondaryButton:hover {
+  background: #f4f8f5;
+
+  border-color: #b9cbbd;
+}
+
+
+.downloadButton span,
+.secondaryButton span {
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   MOBILE HEADER
+========================================================= */
+
+.mobileHeader {
+  display: none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main {
+    margin-left: 220px;
+
+    padding: 35px 30px 50px;
+  }
+
+  .qrCard {
+    grid-template-columns: 330px 1fr;
+
+    gap: 35px;
+
+    padding: 30px;
+  }
+
+  .qrBox {
+    width: 270px;
+    height: 270px;
+  }
+
+  .fakeQr {
+    width: 220px;
+    height: 220px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .mobileHeader {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 20px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e7ece8;
+
+    z-index: 200;
+
+    box-sizing: border-box;
+  }
+
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #173522;
+
+    font-size: 19px;
+    font-weight: 700;
+
+    text-decoration: none;
+  }
+
+
+  .mobileBrand .logoBox {
+    width: 38px;
+    height: 38px;
+  }
+
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dfe7e1;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #284c32;
+
+    font-size: 22px;
+
+    cursor: pointer;
+  }
+
+
+  .sidebar {
+    top: 70px;
+
+    width: 250px;
+    height: calc(100vh - 70px);
+
+    padding: 24px 18px;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.25s ease;
+
+    box-shadow:
+      10px 0 30px rgba(20, 50, 30, 0.08);
+  }
+
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+
+  .sidebar .brand {
+    display: none;
+  }
+
+
+  .main {
+    margin-left: 0;
+
+    padding: 105px 22px 45px;
+  }
+
+
+  .topBar {
+    margin-bottom: 32px;
+  }
+
+
+  .topBar h1 {
+    font-size: 29px;
+  }
+
+
+  .qrCard {
+    grid-template-columns: 1fr;
+
+    gap: 35px;
+
+    padding: 25px;
+  }
+
+
+  .qrPreviewSection {
+    width: 100%;
+  }
+
+
+  .qrBox {
+    width: 280px;
+    height: 280px;
+  }
+
+
+  .fakeQr {
+    width: 230px;
+    height: 230px;
+  }
+
+
+  .qrInfo h2 {
+    font-size: 23px;
+  }
+
+
+  .actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+
+  .downloadButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .mobileHeader {
+    padding: 0 15px;
+  }
+
+
+  .main {
+    padding: 95px 15px 35px;
+  }
+
+
+  .topBar h1 {
+    font-size: 26px;
+  }
+
+
+  .profileCircle {
+    width: 40px;
+    height: 40px;
+  }
+
+
+  .qrCard {
+    padding: 20px;
+
+    border-radius: 16px;
+  }
+
+
+  .qrBox {
+    width: 240px;
+    height: 240px;
+
+    padding: 17px;
+  }
+
+
+  .fakeQr {
+    width: 200px;
+    height: 200px;
+  }
+
+
+  .qrPattern {
+    inset: 16px;
+
+    gap: 5px;
+
+    padding: 14px;
+  }
+
+
+  .qrCornerTopLeft,
+  .qrCornerTopRight,
+  .qrCornerBottomLeft {
+    width: 45px;
+    height: 45px;
+
+    border-width: 7px;
+  }
+
+
+  .qrInfo h2 {
+    font-size: 21px;
+  }
+
+
+  .description {
+    font-size: 13px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .navItem,
+  .downloadButton,
+  .secondaryButton,
+  .sidebar {
+    transition: none;
+  }
+}

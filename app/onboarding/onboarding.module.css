@@ -1,0 +1,786 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 10%,
+      rgba(89, 137, 99, 0.12),
+      transparent 32%),
+    radial-gradient(circle at 90% 20%,
+      rgba(137, 177, 145, 0.12),
+      transparent 28%),
+    #f6f8f4;
+  color: #1d3824;
+  padding-bottom: 60px;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  min-height: 82px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(29, 56, 36, 0.1);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+
+  color: #1d3824;
+  text-decoration: none;
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.logoBox {
+  width: 43px;
+  height: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  border: 1px solid rgba(29, 56, 36, 0.18);
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.75);
+
+  overflow: hidden;
+}
+
+.logoBox img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  border-radius: 7px;
+}
+
+.loginLink {
+  color: #5d6c61;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.loginLink strong {
+  color: #1d3824;
+  margin-left: 4px;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
+.container {
+  width: min(900px, calc(100% - 40px));
+  margin: 55px auto 0;
+}
+
+/* =========================
+   PROGRESS
+========================= */
+
+.progressWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 32px;
+}
+
+.progressStep {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #778179;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.stepNumber {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e4e9e4;
+  color: #758077;
+
+  transition: all 0.25s ease;
+}
+
+.stepNumber.active {
+  background: #1d3824;
+  color: white;
+}
+
+.progressLine {
+  width: 70px;
+  height: 1px;
+
+  margin: 0 13px;
+
+  background: rgba(29, 56, 36, 0.15);
+}
+
+/* =========================
+   CARD
+========================= */
+
+.card {
+  background: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid rgba(29, 56, 36, 0.1);
+  border-radius: 24px;
+
+  box-shadow:
+    0 25px 70px rgba(29, 56, 36, 0.08),
+    0 4px 15px rgba(29, 56, 36, 0.04);
+
+  overflow: hidden;
+}
+
+.content {
+  padding: 48px;
+}
+
+.heading {
+  margin-bottom: 34px;
+}
+
+.phaseLabel {
+  display: block;
+
+  margin-bottom: 10px;
+
+  color: #73907b;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.heading h1 {
+  margin: 0 0 10px;
+
+  color: #1d3824;
+
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.heading p {
+  max-width: 600px;
+
+  margin: 0;
+
+  color: #68736b;
+
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* =========================
+   FORM
+========================= */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 21px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  color: #304236;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 14px 15px;
+
+  border: 1px solid rgba(29, 56, 36, 0.15);
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #fafcf9;
+  color: #1d3824;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 92px;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #9ca59e;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: #52785c;
+
+  background: white;
+
+  box-shadow: 0 0 0 3px rgba(82, 120, 92, 0.1);
+}
+
+.field small {
+  color: #89938b;
+
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* =========================
+   INFO BOX
+========================= */
+
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+
+  margin-top: 26px;
+  padding: 14px 16px;
+
+  border: 1px solid rgba(82, 120, 92, 0.13);
+  border-radius: 12px;
+
+  background: #f4f8f3;
+}
+
+.infoBox span {
+  flex-shrink: 0;
+}
+
+.infoBox p {
+  margin: 0;
+
+  color: #617066;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.infoBox strong {
+  color: #1d3824;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 32px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 0 21px;
+
+  border-radius: 11px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.primaryButton {
+  border: 1px solid #1d3824;
+
+  background: #1d3824;
+  color: white;
+
+  box-shadow: 0 9px 24px rgba(29, 56, 36, 0.15);
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+
+  background: #284b31;
+
+  box-shadow: 0 13px 30px rgba(29, 56, 36, 0.2);
+}
+
+.primaryButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondaryButton {
+  border: 1px solid rgba(29, 56, 36, 0.16);
+
+  background: white;
+  color: #33473a;
+}
+
+.secondaryButton:hover {
+  background: #f5f7f4;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================
+   PAYMENT
+========================= */
+
+.paymentCard {
+  padding: 25px;
+
+  border: 1px solid rgba(29, 56, 36, 0.11);
+  border-radius: 16px;
+
+  background: #f9fbf8;
+}
+
+.paymentLabel {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #859087;
+
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.paymentCard h2 {
+  margin: 0;
+
+  color: #1d3824;
+
+  font-size: 21px;
+}
+
+.paymentDivider {
+  height: 1px;
+
+  margin: 22px 0;
+
+  background: rgba(29, 56, 36, 0.09);
+}
+
+.paymentRow,
+.paymentTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 8px 0;
+
+  color: #69746d;
+
+  font-size: 13px;
+}
+
+.paymentRow strong {
+  color: #304236;
+}
+
+.paymentTotal {
+  margin-top: 12px;
+  padding-top: 18px;
+
+  border-top: 1px solid rgba(29, 56, 36, 0.09);
+
+  color: #1d3824;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.paymentTotal strong {
+  font-size: 22px;
+}
+
+/* =========================
+   QR
+========================= */
+
+.successIcon {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 20px;
+
+  border-radius: 50%;
+
+  background: #e5f1e5;
+  color: #2f6840;
+
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.businessSummary {
+  display: flex;
+  flex-direction: column;
+
+  margin-bottom: 25px;
+  padding: 16px;
+
+  border-radius: 12px;
+
+  background: #f5f8f4;
+}
+
+.businessSummary span {
+  color: #8a958d;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.businessSummary strong {
+  margin-top: 5px;
+
+  color: #1d3824;
+
+  font-size: 17px;
+}
+
+.businessSummary small {
+  margin-top: 3px;
+
+  color: #748078;
+
+  font-size: 12px;
+}
+
+.qrSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 28px;
+
+  border: 1px solid rgba(29, 56, 36, 0.09);
+  border-radius: 16px;
+
+  background: #fafcf9;
+
+  text-align: center;
+}
+
+.qrPlaceholder {
+  width: 190px;
+  height: 190px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: white;
+
+  border: 8px solid white;
+
+  box-shadow: 0 8px 30px rgba(29, 56, 36, 0.08);
+}
+
+.qrPattern {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+
+  padding: 8px;
+
+  box-sizing: border-box;
+
+  background:
+    linear-gradient(45deg,
+      #1d3824 25%,
+      transparent 25%,
+      transparent 75%,
+      #1d3824 75%),
+    linear-gradient(45deg,
+      #1d3824 25%,
+      transparent 25%,
+      transparent 75%,
+      #1d3824 75%);
+
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+}
+
+.qrPattern span {
+  display: block;
+
+  background: white;
+}
+
+.qrSection h3 {
+  margin: 21px 0 5px;
+
+  color: #1d3824;
+
+  font-size: 17px;
+}
+
+.qrSection p {
+  max-width: 390px;
+
+  margin: 0;
+
+  color: #778178;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.demoNote {
+  margin: 18px 0 0;
+
+  color: #9aa29c;
+
+  font-size: 11px;
+  text-align: center;
+}
+
+/* =========================
+   FOOTER NOTE
+========================= */
+
+.footerNote {
+  margin: 22px 0 0;
+
+  color: #89938c;
+
+  font-size: 11px;
+  text-align: center;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 760px) {
+  .header {
+    width: min(100% - 28px, 900px);
+    min-height: 72px;
+  }
+
+  .loginLink {
+    font-size: 12px;
+  }
+
+  .container {
+    width: min(100% - 28px, 900px);
+    margin-top: 32px;
+  }
+
+  .progressWrapper {
+    justify-content: flex-start;
+
+    overflow-x: auto;
+
+    padding-bottom: 5px;
+  }
+
+  .progressStep {
+    font-size: 11px;
+  }
+
+  .stepNumber {
+    width: 27px;
+    height: 27px;
+  }
+
+  .progressLine {
+    width: 35px;
+    margin: 0 8px;
+  }
+
+  .card {
+    border-radius: 18px;
+  }
+
+  .content {
+    padding: 28px 22px;
+  }
+
+  .heading {
+    margin-bottom: 27px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullWidth {
+    grid-column: auto;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .qrPlaceholder {
+    width: 165px;
+    height: 165px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    align-items: center;
+  }
+
+  .brand {
+    font-size: 16px;
+  }
+
+  .logoBox {
+    width: 38px;
+    height: 38px;
+  }
+
+  .loginLink {
+    max-width: 145px;
+    line-height: 1.4;
+    text-align: right;
+  }
+
+  .container {
+    width: calc(100% - 20px);
+    margin-top: 24px;
+  }
+
+  .content {
+    padding: 24px 17px;
+  }
+
+  .heading h1 {
+    font-size: 28px;
+  }
+
+  .heading p {
+    font-size: 13px;
+  }
+
+  .progressStep {
+    gap: 6px;
+    font-size: 10px;
+  }
+
+  .progressLine {
+    width: 20px;
+    margin: 0 5px;
+  }
+
+  .paymentCard {
+    padding: 19px;
+  }
+
+  .qrSection {
+    padding: 20px 14px;
+  }
+
+  .qrPlaceholder {
+    width: 145px;
+    height: 145px;
+  }
+}
+
+/* =========================
+   REDUCED MOTION
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .primaryButton,
+  .secondaryButton,
+  .stepNumber,
+  .field input,
+  .field textarea {
+    transition: none;
+  }
+}

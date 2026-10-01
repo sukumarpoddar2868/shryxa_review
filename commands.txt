@@ -1,1 +1,106 @@
 1. To know project tree structure : tree -I 'node_modules|.next|.git|.gitignore'
+
+
+Authentication credentials/session information can depend on which authentication system you choose, so don't prematurely add password fields if you're going to use Google OAuth or another auth provider.
+
+for this we wil use simple nextauth where user can sign in with email and their set password , we will not implement any third party auth like google and other thing ,
+so my project structure is ready now you can give prisma.schema code and lib/prisma.js , so we can create prisma schema and migrate it:
+sukumar@sukumar:~/Desktop/shryxa_review/shryxa_review$ tree -I 'node_modules|.next|.git|.gitignore'
+.
+├── AGENTS.md
+├── app
+│   ├── admin
+│   │   └── dashboard
+│   │       └── page.js
+│   ├── client
+│   │   └── dashboard
+│   │       └── page.js
+│   ├── components
+│   │   └── navbar.js
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.js
+│   ├── login
+│   │   └── page.js
+│   ├── onboarding
+│   │   └── page.js
+│   └── page.js
+├── CLAUDE.md
+├── commands.txt
+├── eslint.config.mjs
+├── jsconfig.json
+├── lib
+│   ├── auth
+│   ├── payments
+│   ├── prisma.js
+│   └── qr
+├── next.config.mjs
+├── package.json
+├── package-lock.json
+├── postcss.config.mjs
+├── prisma
+│   ├── migrations
+│   └── schema.prisma
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+└── README.md
+
+16 directories, 26 files
+sukumar@sukumar:~/Desktop/shryxa_review/shryxa_review$
+
+Authentication credentials/session information can depend on which authentication system you choose, so don't prematurely add password fields if you're going to use Google OAuth or another auth provider.
+
+for this we wil use simple nextauth where user can sign in with email and their set password , we will not implement any third party auth like google and other thing ,
+so my project structure is ready now you can give prisma.schema code and lib/prisma.js , so we can create prisma schema and migrate it:
+sukumar@sukumar:~/Desktop/shryxa_review/shryxa_review$ tree -I 'node_modules|.next|.git|.gitignore'
+.
+├── AGENTS.md
+├── app
+│   ├── admin
+│   │   └── dashboard
+│   │       └── page.js
+│   ├── client
+│   │   └── dashboard
+│   │       └── page.js
+│   ├── components
+│   │   └── navbar.js
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.js
+│   ├── login
+│   │   └── page.js
+│   ├── onboarding
+│   │   └── page.js
+│   └── page.js
+├── CLAUDE.md
+├── commands.txt
+├── eslint.config.mjs
+├── jsconfig.json
+├── lib
+│   ├── auth
+│   ├── payments
+│   ├── prisma.js
+│   └── qr
+├── next.config.mjs
+├── package.json
+├── package-lock.json
+├── postcss.config.mjs
+├── prisma
+│   ├── migrations
+│   └── schema.prisma
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+└── README.md
+
+16 directories, 26 files
+sukumar@sukumar:~/Desktop/shryxa_review/shryxa_review$
+
+
