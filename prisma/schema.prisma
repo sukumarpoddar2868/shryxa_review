@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------
+// ROLE
+// -------------------------
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users User[]
+}
+
+// -------------------------
+// USER
+// -------------------------
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  roleId       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  businesses Business[]
+
+  @@index([roleId])
+}
+
+// -------------------------
+// BUSINESS
+// -------------------------
+
+model Business {
+  id              Int      @id @default(autoincrement())
+  ownerId         Int
+  shopName        String
+  ownerName       String
+  phone           String
+  address         String
+  pinCode         String
+  googleReviewUrl String
+
+  status    String   @default("PENDING_PAYMENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id])
+  payments Payment[]
+  qrCodes  QRCode[]
+
+  @@index([ownerId])
+}
+
+// -------------------------
+// PAYMENT
+// -------------------------
+
+model Payment {
+  id                Int       @id @default(autoincrement())
+  businessId        Int
+  provider          String
+  providerPaymentId String    @unique
+  amount            Decimal   @db.Decimal(10, 2)
+  currency          String    @default("INR")
+  status            String    @default("PENDING")
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
+}
+
+// -------------------------
+// QR CODE
+// -------------------------
+
+model QRCode {
+  id             Int      @id @default(autoincrement())
+  businessId     Int
+  qrIdentifier   String   @unique
+  destinationUrl String
+  status         String   @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
+}
