@@ -25,7 +25,8 @@ export default function OnboardingClient() {
   const [form, setForm] = useState(initialForm);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [qrGenerated, setQrGenerated] = useState(false);
-
+  const [accountCreated, setAccountCreated] = useState(false);
+  const [accountId, setAccountId] = useState(null);
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -35,7 +36,7 @@ export default function OnboardingClient() {
     }));
   }
 
-  function goToBusiness() {
+ async function goToBusiness() {
     if (
       !form.fullName ||
       !form.email ||
@@ -46,8 +47,44 @@ export default function OnboardingClient() {
       return;
     }
 
+    const accountData = {
+    fullName: form.fullName,
+    email: form.email,
+    phone: form.phone,
+    password: form.password,
+  };
+
+  try {
+    const response = await fetch("/api/account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(accountData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Account creation failed.");
+      return;
+    }
+
+    console.log("Account created:", data);
+
+    // Remember that account has already been created
+    setAccountCreated(true);
+    setAccountId(data.user.id);
+
+    // Only move forward after backend succeeds
     setPhase(1.5);
+
+  } catch (error) {
+    console.error("Account API error:", error);
+    alert("Something went wrong. Please try again.");
   }
+}
+
 
   function goToPayment() {
     if (
@@ -61,6 +98,7 @@ export default function OnboardingClient() {
       alert("Please complete all business fields.");
       return;
     }
+
 
     setPhase(2);
   }
