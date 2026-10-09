@@ -1,5 +1,8 @@
 "use client";
 
+import GetGoogleReviewLink from "@/app/components/GetGoogleReviewLink";
+import { createBusiness } from "@/lib/services/businessService";
+import { createAccount } from "@/lib/services/accountService";
 import { useState } from "react";
 import Link from "next/link";
 import styles from "./onboarding.module.css";
@@ -23,10 +26,18 @@ const initialForm = {
 export default function OnboardingClient() {
   const [phase, setPhase] = useState(1);
   const [form, setForm] = useState(initialForm);
+
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [qrGenerated, setQrGenerated] = useState(false);
+
+  // Account state
   const [accountCreated, setAccountCreated] = useState(false);
   const [accountId, setAccountId] = useState(null);
+
+  // Business state
+  const [businessCreated, setBusinessCreated] = useState(false);
+  const [businessId, setBusinessId] = useState(null);
+
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -36,57 +47,50 @@ export default function OnboardingClient() {
     }));
   }
 
- async function goToBusiness() {
-    if (
-      !form.fullName ||
-      !form.email ||
-      !form.phone ||
-      !form.password
-    ) {
+  // ============================================================
+  // PHASE 1A → ACCOUNT
+  // ============================================================
+
+  async function goToBusiness() {
+    if (!form.fullName || !form.email || !form.phone || !form.password) {
       alert("Please complete all account fields.");
       return;
     }
 
-    const accountData = {
-    fullName: form.fullName,
-    email: form.email,
-    phone: form.phone,
-    password: form.password,
-  };
-
-  try {
-    const response = await fetch("/api/account", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(accountData),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Account creation failed.");
+    // Account already exists.
+    // Don't create another account.
+    if (accountCreated) {
+      setPhase(1.5);
       return;
     }
 
-    console.log("Account created:", data);
+    const accountData = {
+      fullName: form.fullName,
+      email: form.email,
+      phone: form.phone,
+      password: form.password,
+    };
 
-    // Remember that account has already been created
-    setAccountCreated(true);
-    setAccountId(data.user.id);
+    try {
+      const data = await createAccount(accountData);
 
-    // Only move forward after backend succeeds
-    setPhase(1.5);
+      console.log("Account created:", data);
 
-  } catch (error) {
-    console.error("Account API error:", error);
-    alert("Something went wrong. Please try again.");
+      setAccountCreated(true);
+      setAccountId(data.user.id);
+
+      setPhase(1.5);
+    } catch (error) {
+      console.error("Account API error:", error);
+      alert(error.message);
+    }
   }
-}
 
+  // ============================================================
+  // PHASE 1B → BUSINESS
+  // ============================================================
 
-  function goToPayment() {
+  async function goToPayment() {
     if (
       !form.shopName ||
       !form.ownerName ||
@@ -99,21 +103,57 @@ export default function OnboardingClient() {
       return;
     }
 
+    // Business already exists.
+    // Don't create another business.
+    if (businessCreated) {
+      setPhase(2);
+      return;
+    }
 
-    setPhase(2);
+    const businessData = {
+      ownerId: accountId,
+      shopName: form.shopName,
+      ownerName: form.ownerName,
+      phone: form.businessPhone,
+      address: form.address,
+      pinCode: form.pinCode,
+      googleReviewUrl: form.googleReviewUrl,
+    };
+
+    try {
+      const data = await createBusiness(businessData);
+
+      console.log("Business created:", data);
+
+      setBusinessCreated(true);
+      setBusinessId(data.business.id);
+
+      setPhase(2);
+    } catch (error) {
+      console.error("Business API error:", error);
+      alert(error.message);
+    }
   }
+
+  // ============================================================
+  // PHASE 2 → PAYMENT
+  // ============================================================
 
   function processPayment() {
     setPaymentProcessing(true);
 
     // Temporary frontend simulation.
-    // Later this will call your payment API.
+    // Payment gateway will be connected later.
     setTimeout(() => {
       setPaymentProcessing(false);
       setPhase(3);
       setQrGenerated(true);
     }, 1800);
   }
+
+  // ============================================================
+  // BACK BUTTON
+  // ============================================================
 
   function goBack() {
     if (phase === 1.5) {
@@ -127,7 +167,10 @@ export default function OnboardingClient() {
 
   return (
     <main className={styles.page}>
-      {/* Header */}
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
+
       <header className={styles.header}>
         <Link href="/" className={styles.brand}>
           <span className={styles.logoBox}>
@@ -142,10 +185,18 @@ export default function OnboardingClient() {
         </Link>
       </header>
 
-      {/* Main */}
+      {/* ========================================================
+          MAIN
+      ======================================================== */}
+
       <section className={styles.container}>
-        {/* Progress */}
+        {/* ======================================================
+            PROGRESS
+        ====================================================== */}
+
         <div className={styles.progressWrapper}>
+          {/* STEP 1 */}
+
           <div className={styles.progressStep}>
             <span
               className={`${styles.stepNumber} ${
@@ -159,6 +210,8 @@ export default function OnboardingClient() {
           </div>
 
           <div className={styles.progressLine}></div>
+
+          {/* STEP 2 */}
 
           <div className={styles.progressStep}>
             <span
@@ -174,6 +227,8 @@ export default function OnboardingClient() {
 
           <div className={styles.progressLine}></div>
 
+          {/* STEP 3 */}
+
           <div className={styles.progressStep}>
             <span
               className={`${styles.stepNumber} ${
@@ -187,11 +242,15 @@ export default function OnboardingClient() {
           </div>
         </div>
 
-        {/* Card */}
+        {/* ======================================================
+            CARD
+        ====================================================== */}
+
         <div className={styles.card}>
-          {/* =========================================
+          {/* ====================================================
               PHASE 1A — ACCOUNT
-          ========================================= */}
+          ==================================================== */}
+
           {phase === 1 && (
             <div className={styles.content}>
               <div className={styles.heading}>
@@ -199,12 +258,12 @@ export default function OnboardingClient() {
 
                 <h1>Create your account</h1>
 
-                <p>
-                  Start your Shryxa journey by creating your account.
-                </p>
+                <p>Start your Shryxa journey by creating your account.</p>
               </div>
 
               <div className={styles.formGrid}>
+                {/* FULL NAME */}
+
                 <div className={styles.field}>
                   <label htmlFor="fullName">Full Name</label>
 
@@ -217,6 +276,8 @@ export default function OnboardingClient() {
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* EMAIL */}
 
                 <div className={styles.field}>
                   <label htmlFor="email">Email Address</label>
@@ -231,6 +292,8 @@ export default function OnboardingClient() {
                   />
                 </div>
 
+                {/* PHONE */}
+
                 <div className={styles.field}>
                   <label htmlFor="phone">Phone Number</label>
 
@@ -243,6 +306,8 @@ export default function OnboardingClient() {
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* PASSWORD */}
 
                 <div className={styles.field}>
                   <label htmlFor="password">Password</label>
@@ -258,6 +323,8 @@ export default function OnboardingClient() {
                 </div>
               </div>
 
+              {/* INFO */}
+
               <div className={styles.infoBox}>
                 <span>🔐</span>
 
@@ -267,6 +334,8 @@ export default function OnboardingClient() {
                   role.
                 </p>
               </div>
+
+              {/* ACTIONS */}
 
               <div className={styles.actions}>
                 <button
@@ -281,9 +350,10 @@ export default function OnboardingClient() {
             </div>
           )}
 
-          {/* =========================================
+          {/* ====================================================
               PHASE 1B — BUSINESS
-          ========================================= */}
+          ==================================================== */}
+
           {phase === 1.5 && (
             <div className={styles.content}>
               <div className={styles.heading}>
@@ -292,12 +362,14 @@ export default function OnboardingClient() {
                 <h1>Tell us about your business</h1>
 
                 <p>
-                  Add the business that will use Shryxa to collect
-                  customer reviews.
+                  Add the business that will use Shryxa to collect customer
+                  reviews.
                 </p>
               </div>
 
               <div className={styles.formGrid}>
+                {/* BUSINESS NAME */}
+
                 <div className={styles.field}>
                   <label htmlFor="shopName">Business Name</label>
 
@@ -310,6 +382,8 @@ export default function OnboardingClient() {
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* OWNER NAME */}
 
                 <div className={styles.field}>
                   <label htmlFor="ownerName">Owner Name</label>
@@ -324,10 +398,10 @@ export default function OnboardingClient() {
                   />
                 </div>
 
+                {/* BUSINESS PHONE */}
+
                 <div className={styles.field}>
-                  <label htmlFor="businessPhone">
-                    Business Phone
-                  </label>
+                  <label htmlFor="businessPhone">Business Phone</label>
 
                   <input
                     id="businessPhone"
@@ -338,6 +412,8 @@ export default function OnboardingClient() {
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* PIN CODE */}
 
                 <div className={styles.field}>
                   <label htmlFor="pinCode">PIN Code</label>
@@ -353,6 +429,8 @@ export default function OnboardingClient() {
                   />
                 </div>
 
+                {/* ADDRESS */}
+
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label htmlFor="address">Business Address</label>
 
@@ -366,26 +444,43 @@ export default function OnboardingClient() {
                   />
                 </div>
 
+                {/* GOOGLE REVIEW URL */}
+
                 <div className={`${styles.field} ${styles.fullWidth}`}>
-                  <label htmlFor="googleReviewUrl">
-                    Google Review Page URL
-                  </label>
+                  <div className={styles.reviewUrlHeader}>
+                    <label htmlFor="googleReviewUrl">
+                      Google Review Page URL
+                    </label>
+
+                    <GetGoogleReviewLink
+                      shopName={form.shopName}
+                      address={form.address}
+                      onUrlFound={(url) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          googleReviewUrl: url,
+                        }))
+                      }
+                    />
+                  </div>
 
                   <input
                     id="googleReviewUrl"
                     name="googleReviewUrl"
                     type="url"
-                    placeholder="https://g.page/r/..."
                     value={form.googleReviewUrl}
                     onChange={handleChange}
+                    placeholder="https://..."
                   />
 
                   <small>
-                    This is the Google page where your customers will
-                    eventually post their review.
+                    This is the Google page where your customers will eventually
+                    post their review.
                   </small>
                 </div>
               </div>
+
+              {/* ACTIONS */}
 
               <div className={styles.actions}>
                 <button
@@ -408,9 +503,10 @@ export default function OnboardingClient() {
             </div>
           )}
 
-          {/* =========================================
+          {/* ====================================================
               PHASE 2 — PAYMENT
-          ========================================= */}
+          ==================================================== */}
+
           {phase === 2 && (
             <div className={styles.content}>
               <div className={styles.heading}>
@@ -419,16 +515,16 @@ export default function OnboardingClient() {
                 <h1>Complete your setup</h1>
 
                 <p>
-                  Activate Shryxa for your business by completing
-                  your subscription payment.
+                  Activate Shryxa for your business by completing your
+                  subscription payment.
                 </p>
               </div>
 
+              {/* PAYMENT CARD */}
+
               <div className={styles.paymentCard}>
                 <div>
-                  <span className={styles.paymentLabel}>
-                    Business
-                  </span>
+                  <span className={styles.paymentLabel}>Business</span>
 
                   <h2>{form.shopName}</h2>
                 </div>
@@ -451,15 +547,18 @@ export default function OnboardingClient() {
                 </div>
               </div>
 
+              {/* PAYMENT INFO */}
+
               <div className={styles.infoBox}>
                 <span>💳</span>
 
                 <p>
-                  Payment details such as transaction ID, status and
-                  payment time will be automatically received from
-                  the payment gateway.
+                  Payment details such as transaction ID, status and payment
+                  time will be automatically received from the payment gateway.
                 </p>
               </div>
+
+              {/* ACTIONS */}
 
               <div className={styles.actions}>
                 <button
@@ -477,9 +576,7 @@ export default function OnboardingClient() {
                   onClick={processPayment}
                   disabled={paymentProcessing}
                 >
-                  {paymentProcessing
-                    ? "Processing..."
-                    : "Proceed to Payment"}
+                  {paymentProcessing ? "Processing..." : "Proceed to Payment"}
 
                   {!paymentProcessing && <span>→</span>}
                 </button>
@@ -491,9 +588,10 @@ export default function OnboardingClient() {
             </div>
           )}
 
-          {/* =========================================
+          {/* ====================================================
               PHASE 3 — QR
-          ========================================= */}
+          ==================================================== */}
+
           {phase === 3 && qrGenerated && (
             <div className={styles.content}>
               <div className={styles.successIcon}>✓</div>
@@ -504,10 +602,12 @@ export default function OnboardingClient() {
                 <h1>Your QR code is ready</h1>
 
                 <p>
-                  Your business has been successfully prepared for
-                  review collection.
+                  Your business has been successfully prepared for review
+                  collection.
                 </p>
               </div>
+
+              {/* BUSINESS SUMMARY */}
 
               <div className={styles.businessSummary}>
                 <span>Business</span>
@@ -516,6 +616,8 @@ export default function OnboardingClient() {
 
                 <small>{form.address}</small>
               </div>
+
+              {/* QR SECTION */}
 
               <div className={styles.qrSection}>
                 <div className={styles.qrPlaceholder}>
@@ -535,19 +637,23 @@ export default function OnboardingClient() {
                 <h3>Scan to review</h3>
 
                 <p>
-                  Customers can scan this QR code to start their
-                  Shryxa review experience.
+                  Customers can scan this QR code to start their Shryxa review
+                  experience.
                 </p>
               </div>
+
+              {/* QR INFO */}
 
               <div className={styles.infoBox}>
                 <span>✓</span>
 
                 <p>
-                  Your QR identifier and destination URL will be
-                  generated automatically by Shryxa.
+                  Your QR identifier and destination URL will be generated
+                  automatically by Shryxa.
                 </p>
               </div>
+
+              {/* ACTIONS */}
 
               <div className={styles.actions}>
                 <button
@@ -558,27 +664,27 @@ export default function OnboardingClient() {
                   Download QR
                 </button>
 
-                <Link
-                  href="/client/dashboard"
-                  className={styles.primaryButton}
-                >
+                <Link href="/client/dashboard" className={styles.primaryButton}>
                   Go to Dashboard
                   <span>→</span>
                 </Link>
               </div>
 
               <p className={styles.demoNote}>
-                Demo QR: actual QR generation will be connected to
-                your backend later.
+                Demo QR: actual QR generation will be connected to your backend
+                later.
               </p>
             </div>
           )}
         </div>
 
-        {/* Security note */}
+        {/* ======================================================
+            SECURITY NOTE
+        ====================================================== */}
+
         <p className={styles.footerNote}>
-          Your information is securely used to set up your Shryxa
-          business account.
+          Your information is securely used to set up your Shryxa business
+          account.
         </p>
       </section>
     </main>
