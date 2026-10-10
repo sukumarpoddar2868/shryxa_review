@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import GetGoogleReviewLink from "@/app/components/GetGoogleReviewLink";
 import { createBusiness } from "@/lib/services/businessService";
 import { createAccount } from "@/lib/services/accountService";
@@ -66,7 +67,7 @@ export default function OnboardingClient() {
 
     const accountData = {
       fullName: form.fullName,
-      email: form.email,
+      email: form.email.trim().toLowerCase(),
       phone: form.phone,
       password: form.password,
     };
@@ -83,6 +84,21 @@ export default function OnboardingClient() {
     } catch (error) {
       console.error("Account API error:", error);
       alert(error.message);
+    }
+  }
+
+  //function for sign in automatically when account created
+  async function authenticateRegisteredUser() {
+    const result = await signIn("credentials", {
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+      redirect: false,
+    });
+
+    if (!result || result.error) {
+      throw new Error(
+        "Account and business are saved, but automatic login failed. Please log in manually.",
+      );
     }
   }
 
@@ -103,24 +119,28 @@ export default function OnboardingClient() {
       return;
     }
 
-    // Business already exists.
-    // Don't create another business.
-    if (businessCreated) {
-      setPhase(2);
-      return;
-    }
-
-    const businessData = {
-      ownerId: accountId,
-      shopName: form.shopName,
-      ownerName: form.ownerName,
-      phone: form.businessPhone,
-      address: form.address,
-      pinCode: form.pinCode,
-      googleReviewUrl: form.googleReviewUrl,
-    };
-
     try {
+      // If the business already exists, retry authentication
+      // instead of creating another business.
+
+      if (businessCreated) {
+        await authenticateRegisteredUser();
+        setPhase(2);
+        return;
+      }
+
+      const businessData = {
+        ownerId: accountId,
+        shopName: form.shopName,
+        ownerName: form.ownerName,
+        phone: form.businessPhone,
+        address: form.address,
+        pinCode: form.pinCode,
+        googleReviewUrl: form.googleReviewUrl,
+      };
+
+      // 1. Save the business in PostgreSQL.
+
       const data = await createBusiness(businessData);
 
       console.log("Business created:", data);
@@ -128,13 +148,18 @@ export default function OnboardingClient() {
       setBusinessCreated(true);
       setBusinessId(data.business.id);
 
+      // 2. Establish the authenticated session.
+
+      await authenticateRegisteredUser();
+
+      // 3. Continue to the payment phase.
+
       setPhase(2);
     } catch (error) {
-      console.error("Business API error:", error);
+      console.error("Business creation or authentication failed:", error);
       alert(error.message);
     }
   }
-
   // ============================================================
   // PHASE 2 → PAYMENT
   // ============================================================
