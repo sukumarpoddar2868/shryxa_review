@@ -1,6 +1,6 @@
 
 "use client";
-
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
@@ -8,18 +8,38 @@ import styles from "./login.module.css";
 export default function LoginPage() {
   const router = useRouter();
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Authentication will be connected later.
-    console.log("Login submitted:", {
-      email,
-      password,
-    });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (!result || result.error) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      router.push("/client/dashboard");
+      router.refresh();
+    } catch (error) {
+      console.error("Login failed:", error);
+      setError("Unable to log in. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -41,15 +61,10 @@ export default function LoginPage() {
             aria-label="Go to Shryxa home"
           >
             <span className={styles.logoBox}>
-              <img
-                src="/shryxa-logo.png"
-                alt="Shryxa Review"
-              />
+              <img src="/shryxa-logo.png" alt="Shryxa Review" />
             </span>
 
-            <span className={styles.brandName}>
-              Shryxa
-            </span>
+            <span className={styles.brandName}>Shryxa</span>
           </button>
 
           <p className={styles.tagline}>
@@ -62,20 +77,13 @@ export default function LoginPage() {
           <div className={styles.header}>
             <h1>Welcome back</h1>
 
-            <p>
-              Login to your Shryxa Review account.
-            </p>
+            <p>Login to your Shryxa Review account.</p>
           </div>
 
-          <form
-            onSubmit={handleLogin}
-            className={styles.form}
-          >
+          <form onSubmit={handleLogin} className={styles.form}>
             {/* Email */}
             <div className={styles.field}>
-              <label htmlFor="email">
-                Email address
-              </label>
+              <label htmlFor="email">Email address</label>
 
               <input
                 id="email"
@@ -92,9 +100,7 @@ export default function LoginPage() {
             {/* Password */}
             <div className={styles.field}>
               <div className={styles.passwordHeader}>
-                <label htmlFor="password">
-                  Password
-                </label>
+                <label htmlFor="password">Password</label>
 
                 <button
                   type="button"
@@ -119,15 +125,9 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword((previous) => !previous)
-                  }
+                  onClick={() => setShowPassword((previous) => !previous)}
                   className={styles.showButton}
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -135,12 +135,19 @@ export default function LoginPage() {
             </div>
 
             {/* Login */}
+            {error && (
+              <p role="alert" className={styles.errorMessage}>
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               className={styles.loginButton}
+              disabled={isLoading}
             >
-              Login
-              <span>↗</span>
+              {isLoading ? "Logging in..." : "Login"}
+
+              {!isLoading && <span>↗</span>}
             </button>
           </form>
 

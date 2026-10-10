@@ -23,9 +23,9 @@ model Role {
 // -------------------------
 
 model User {
-  id           Int      @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   name         String
-  email        String   @unique
+  email        String  @unique
   passwordHash String
   phone        String?
   roleId       Int
@@ -44,7 +44,7 @@ model User {
 // -------------------------
 
 model Business {
-  id              Int      @id @default(autoincrement())
+  id              Int    @id @default(autoincrement())
   ownerId         Int
   shopName        String
   ownerName       String
@@ -53,15 +53,62 @@ model Business {
   pinCode         String
   googleReviewUrl String
 
+  // Business setup/payment eligibility status
   status    String   @default("PENDING_PAYMENT")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner    User      @relation(fields: [ownerId], references: [id])
-  payments Payment[]
-  qrCodes  QRCode[]
+  owner         User           @relation(fields: [ownerId], references: [id])
+  payments      Payment[]
+  subscriptions Subscription[]
+  qrCodes       QRCode[]
+  orders        Order[]
 
   @@index([ownerId])
+}
+
+// -------------------------
+// SUBSCRIPTION
+// -------------------------
+
+model Subscription {
+  id         Int @id @default(autoincrement())
+  businessId Int
+
+  // Our subscription plan
+  planName String  @default("MONTHLY")
+  amount   Decimal @default(199.00) @db.Decimal(10, 2)
+  currency String  @default("INR")
+  interval String  @default("MONTHLY")
+
+  // Razorpay subscription details
+  provider               String  @default("RAZORPAY")
+  providerPlanId         String?
+  providerSubscriptionId String? @unique
+
+  // CREATED, AUTHENTICATED, ACTIVE, PENDING,
+  // HALTED, CANCELLED, COMPLETED, EXPIRED
+  status String @default("CREATED")
+
+  startDate          DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  nextBillingAt      DateTime?
+
+  // true when cancellation is scheduled for period end
+  cancelAtPeriodEnd Boolean   @default(false)
+  cancelledAt       DateTime?
+  endedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id])
+  payments Payment[]
+
+  @@index([businessId])
+  @@index([status])
+  @@index([nextBillingAt])
 }
 
 // -------------------------
@@ -69,19 +116,37 @@ model Business {
 // -------------------------
 
 model Payment {
-  id                Int       @id @default(autoincrement())
-  businessId        Int
-  provider          String
-  providerPaymentId String    @unique
-  amount            Decimal   @db.Decimal(10, 2)
-  currency          String    @default("INR")
-  status            String    @default("PENDING")
-  paidAt            DateTime?
-  createdAt         DateTime  @default(now())
+  id         Int @id @default(autoincrement())
+  businessId Int
 
-  business Business @relation(fields: [businessId], references: [id])
+  // Nullable to support existing records and payment
+  // attempts before a gateway payment ID is available.
+  subscriptionId Int?
+
+  provider String @default("RAZORPAY")
+
+  // Gateway identifiers
+  providerOrderId   String? @unique
+  providerPaymentId String? @unique
+
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("INR")
+
+  // PENDING, SUCCESS, FAILED, REFUNDED
+  status String @default("PENDING")
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orderId   Int?
+
+  order        Order?        @relation(fields: [orderId], references: [id])
+  business     Business      @relation(fields: [businessId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
 
   @@index([businessId])
+  @@index([subscriptionId])
+  @@index([status])
 }
 
 // -------------------------
@@ -89,11 +154,11 @@ model Payment {
 // -------------------------
 
 model QRCode {
-  id             Int      @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   businessId     Int
-  qrIdentifier   String   @unique
+  qrIdentifier   String @unique
   destinationUrl String
-  status         String   @default("ACTIVE")
+  status         String @default("ACTIVE")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -101,4 +166,73 @@ model QRCode {
   business Business @relation(fields: [businessId], references: [id])
 
   @@index([businessId])
+}
+
+// -------------------------
+// PRODUCT
+// -------------------------
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  currency    String  @default("INR")
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+// -------------------------
+// ORDER
+// -------------------------
+
+model Order {
+  id         Int @id @default(autoincrement())
+  businessId Int
+  productId  Int
+
+  // Purchase details
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
+  currency    String  @default("INR")
+
+  // Order status
+  status String @default("PENDING_PAYMENT")
+
+  // Delivery recipient
+  recipientName  String
+  recipientPhone String
+
+  // Delivery address
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pinCode      String
+  country      String  @default("India")
+
+  // Shipping and fulfilment
+  fulfilmentStatus String    @default("PENDING")
+  shippingProvider String?
+  trackingNumber   String?
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  payments Payment[]
+
+  @@index([businessId])
+  @@index([productId])
+  @@index([status])
+  @@index([fulfilmentStatus])
 }
