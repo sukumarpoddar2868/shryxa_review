@@ -57,28 +57,31 @@ export default function OnboardingClient() {
       alert("Please complete all account fields.");
       return;
     }
-
-    // Account already exists.
-    // Don't create another account.
-    if (accountCreated) {
-      setPhase(1.5);
-      return;
-    }
-
-    const accountData = {
-      fullName: form.fullName,
-      email: form.email.trim().toLowerCase(),
-      phone: form.phone,
-      password: form.password,
-    };
-
     try {
-      const data = await createAccount(accountData);
+      // Account already exists.
+      // Don't create another account.
+      if (accountCreated) {
+        await authenticateRegisteredUser();
+        setPhase(1.5);
+        return;
+      }
 
-      console.log("Account created:", data);
+      const accountData = {
+        fullName: form.fullName,
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone,
+        password: form.password,
+      };
+
+      const data = await createAccount(accountData);
+      // 2. Establish the authenticated session.
 
       setAccountCreated(true);
       setAccountId(data.user.id);
+
+      console.log("Account created:", data);
+
+      await authenticateRegisteredUser();
 
       setPhase(1.5);
     } catch (error) {
@@ -97,7 +100,7 @@ export default function OnboardingClient() {
 
     if (!result || result.error) {
       throw new Error(
-        "Account and business are saved, but automatic login failed. Please log in manually.",
+        "Your account is saved, but login failed. Please check your credentials and try again.",
       );
     }
   }
@@ -120,17 +123,17 @@ export default function OnboardingClient() {
     }
 
     try {
-      // If the business already exists, retry authentication
-      // instead of creating another business.
-
+      // Business already exists: retry login and continue.
       if (businessCreated) {
         await authenticateRegisteredUser();
         setPhase(2);
         return;
       }
 
+      // Ensure the user is authenticated before creating a business.
+      await authenticateRegisteredUser();
+
       const businessData = {
-        ownerId: accountId,
         shopName: form.shopName,
         ownerName: form.ownerName,
         phone: form.businessPhone,
@@ -139,20 +142,13 @@ export default function OnboardingClient() {
         googleReviewUrl: form.googleReviewUrl,
       };
 
-      // 1. Save the business in PostgreSQL.
-
+      // The backend identifies the owner from the session.
       const data = await createBusiness(businessData);
 
       console.log("Business created:", data);
 
       setBusinessCreated(true);
       setBusinessId(data.business.id);
-
-      // 2. Establish the authenticated session.
-
-      await authenticateRegisteredUser();
-
-      // 3. Continue to the payment phase.
 
       setPhase(2);
     } catch (error) {
