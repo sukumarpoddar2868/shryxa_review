@@ -15,7 +15,7 @@ export async function POST(request) {
       );
     }
 
-    // 2. Read the Checkout response.
+    // 2. Read the Razorpay Checkout response.
     const body = await request.json();
 
     const subscriptionId = body.razorpay_subscription_id;
@@ -43,7 +43,7 @@ export async function POST(request) {
       );
     }
 
-    // 4. Find the subscription in our database.
+    // 4. Find the local subscription.
     const localSubscription = await prisma.subscription.findUnique({
       where: {
         providerSubscriptionId: subscriptionId,
@@ -57,7 +57,7 @@ export async function POST(request) {
       );
     }
 
-    // 5. Confirm that the logged-in user owns the business.
+    // 5. Confirm that the logged-in user owns this business.
     const business = await prisma.business.findFirst({
       where: {
         id: localSubscription.businessId,
@@ -72,12 +72,24 @@ export async function POST(request) {
       );
     }
 
-    // 6. Fetch the subscription directly from Razorpay.
+    // 6. Fetch subscription details directly from Razorpay.
     const razorpay = getRazorpayClient();
 
     const remoteSubscription =
       await razorpay.subscriptions.fetch(subscriptionId);
 
+    // Validate the subscription BEFORE recording any payment.
+    if (
+      remoteSubscription.id !== subscriptionId ||
+      remoteSubscription.plan_id !== localSubscription.providerPlanId
+    ) {
+      return Response.json(
+        { message: "Subscription details do not match." },
+        { status: 400 },
+      );
+    }
+
+    // 7. Fetch and validate the payment.
     const remotePayment = await razorpay.payments.fetch(paymentId);
 
     if (remotePayment.id !== paymentId) {
@@ -86,6 +98,7 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+
     if (!["authorized", "captured"].includes(remotePayment.status)) {
       return Response.json(
         {
@@ -96,6 +109,8 @@ export async function POST(request) {
       );
     }
 
+    // 8. Record captured payments.
+    // Note: Captured does not by itself prove subscription activation.
     if (remotePayment.status === "captured") {
       await prisma.payment.upsert({
         where: {
@@ -122,18 +137,7 @@ export async function POST(request) {
       });
     }
 
-    // Ensure the fetched subscription matches our configured plan.
-    if (
-      remoteSubscription.id !== subscriptionId ||
-      remoteSubscription.plan_id !== localSubscription.providerPlanId
-    ) {
-      return Response.json(
-        { message: "Subscription details do not match." },
-        { status: 400 },
-      );
-    }
-
-    // 7. Record the verified subscription state.
+    // 9. Update the local subscription status.
     if (remoteSubscription.status === "active") {
       await prisma.subscription.update({
         where: { id: localSubscription.id },
@@ -148,8 +152,9 @@ export async function POST(request) {
       return Response.json({
         verified: true,
         status: remoteSubscription.status,
+        active: false,
         message:
-          "The Checkout response is verified, but the subscription is not active yet.",
+          "Checkout was verified, but the subscription is not active yet.",
       });
     }
 
