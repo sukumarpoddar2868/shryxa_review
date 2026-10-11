@@ -1,10 +1,10 @@
 "use client";
-
+import { createSubscriptionRequest } from "@/lib/services/subscriptionClient";
 import { signIn } from "next-auth/react";
 import GetGoogleReviewLink from "@/app/components/GetGoogleReviewLink";
 import { createBusiness } from "@/lib/services/businessService";
 import { createAccount } from "@/lib/services/accountService";
-import { useState } from "react";
+import { useEffect,useState } from "react";
 import Link from "next/link";
 import styles from "./onboarding.module.css";
 
@@ -30,6 +30,7 @@ export default function OnboardingClient() {
 
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [qrGenerated, setQrGenerated] = useState(false);
+  const [includeStandee, setIncludeStandee] = useState(false);
 
   // Account state
   const [accountCreated, setAccountCreated] = useState(false);
@@ -38,6 +39,47 @@ export default function OnboardingClient() {
   // Business state
   const [businessCreated, setBusinessCreated] = useState(false);
   const [businessId, setBusinessId] = useState(null);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  useEffect(() => {
+    const scriptUrl = "https://checkout.razorpay.com/v1/checkout.js";
+
+    let script = document.querySelector(`script[src="${scriptUrl}"]`);
+
+    if (script?.dataset.loaded === "true") {
+      setRazorpayLoaded(true);
+      return;
+    }
+
+    if (script) {
+      script.addEventListener("load", handleLoad);
+      script.addEventListener("error", handleError);
+    } else {
+      script = document.createElement("script");
+      script.src = scriptUrl;
+      script.async = true;
+
+      script.addEventListener("load", handleLoad);
+      script.addEventListener("error", handleError);
+
+      document.body.appendChild(script);
+    }
+
+    function handleLoad() {
+      script.dataset.loaded = "true";
+      setRazorpayLoaded(true);
+    }
+
+    function handleError() {
+      console.error("Unable to load Razorpay Checkout.");
+      setRazorpayLoaded(false);
+    }
+
+    return () => {
+      script?.removeEventListener("load", handleLoad);
+      script?.removeEventListener("error", handleError);
+    };
+  }, []);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -160,16 +202,101 @@ export default function OnboardingClient() {
   // PHASE 2 → PAYMENT
   // ============================================================
 
-  function processPayment() {
+  async function processPayment() {
+    if (paymentProcessing) return;
+
+    if (!businessId) {
+      alert("Business information is missing. Please try again.");
+      return;
+    }
+
+    if (!razorpayLoaded || !window.Razorpay) {
+      alert("Payment gateway is still loading. Please try again.");
+      return;
+    }
+
     setPaymentProcessing(true);
 
-    // Temporary frontend simulation.
-    // Payment gateway will be connected later.
-    setTimeout(() => {
+    try {
+      // 1. Create the subscription through our backend.
+      const subscription = await createSubscriptionRequest(businessId);
+
+      // 2. Open Razorpay Checkout.
+      const options = {
+        key: subscription.keyId,
+        subscription_id: subscription.subscriptionId,
+        name: "Shryxa Review",
+        description: "Monthly subscription — ₹199",
+        handler: async function (response) {
+          try {
+            // 3. Verify the payment through our backend.
+            const verificationResponse = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(response),
+            });
+
+            const verification = await verificationResponse.json();
+
+            if (!verificationResponse.ok || !verification.verified) {
+              alert(
+                verification.message ||
+                  "Payment verification failed. Please contact support.",
+              );
+              return;
+            }
+
+            if (!verification.active) {
+              alert(
+                "Your payment details were received. Your subscription is not active yet.",
+              );
+              return;
+            }
+
+            // 4. Show success only after backend verification.
+            setPhase(3);
+            setQrGenerated(true);
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            alert(
+              "We couldn't verify your payment. Please contact support before trying again.",
+            );
+          } finally {
+            setPaymentProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentProcessing(false);
+          },
+        },
+        theme: {
+          color: "#2563eb",
+        },
+      };
+
+      const checkout = new window.Razorpay(options);
+
+      checkout.on("payment.failed", function (response) {
+        console.error("Razorpay payment failed:", response.error);
+
+        setPaymentProcessing(false);
+
+        alert(
+          response.error?.description || "Payment failed. Please try again.",
+        );
+      });
+
+      checkout.open();
+    } catch (error) {
+      console.error("Unable to start payment:", error);
+
       setPaymentProcessing(false);
-      setPhase(3);
-      setQrGenerated(true);
-    }, 1800);
+
+      alert(error.message || "Unable to start payment. Please try again.");
+    }
   }
 
   // ============================================================
@@ -543,30 +670,42 @@ export default function OnboardingClient() {
 
               {/* PAYMENT CARD */}
 
-              <div className={styles.paymentCard}>
-                <div>
-                  <span className={styles.paymentLabel}>Business</span>
-
-                  <h2>{form.shopName}</h2>
-                </div>
-
-                <div className={styles.paymentDivider}></div>
-
-                <div className={styles.paymentRow}>
-                  <span>Shryxa Review</span>
-                  <strong>₹999</strong>
-                </div>
-
-                <div className={styles.paymentRow}>
-                  <span>Billing</span>
-                  <span>One-time setup</span>
-                </div>
-
-                <div className={styles.paymentTotal}>
-                  <span>Total</span>
-                  <strong>₹999</strong>
-                </div>
+              <div className={styles.paymentRow}>
+                <span>Shryxa Review Subscription</span>
+                <strong>₹199/month</strong>
               </div>
+
+              <div className={styles.paymentRow}>
+                <span>Billing</span>
+                <span>Monthly, auto-renewal</span>
+              </div>
+
+              <div className={styles.paymentDivider}></div>
+
+              <label className={styles.paymentRow}>
+                <span>
+                  <input
+                    type="checkbox"
+                    checked={includeStandee}
+                    onChange={(event) =>
+                      setIncludeStandee(event.target.checked)
+                    }
+                  />{" "}
+                  Add Shryxa standee (one-time)
+                </span>
+                <strong>₹499</strong>
+              </label>
+
+              <div className={styles.paymentTotal}>
+                <span>Initial payment</span>
+                <strong>₹{includeStandee ? 698 : 199}</strong>
+              </div>
+
+              <p>
+                {includeStandee
+                  ? "₹698 initially (subscription + standee), then ₹199/month."
+                  : "₹199/month. Cancel your subscription whenever you choose."}
+              </p>
 
               {/* PAYMENT INFO */}
 
@@ -597,15 +736,13 @@ export default function OnboardingClient() {
                   onClick={processPayment}
                   disabled={paymentProcessing}
                 >
-                  {paymentProcessing ? "Processing..." : "Proceed to Payment"}
+                  {paymentProcessing ? "Processing..." : "Subscribe & Pay"}
 
                   {!paymentProcessing && <span>→</span>}
                 </button>
               </div>
 
-              <p className={styles.demoNote}>
-                Demo mode: payment gateway will be connected later.
-              </p>
+
             </div>
           )}
 
