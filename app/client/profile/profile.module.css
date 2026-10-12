@@ -821,3 +821,186 @@
     transition: none;
   }
 }
+
+/* =========================================================
+   PROFILE PAGE — MOBILE RESPONSIVENESS
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .page {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .mobileHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    width: 100%;
+    height: 70px;
+    padding: 0 16px;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: #fff;
+    border-bottom: 1px solid #e7ece8;
+    z-index: 200;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 70px;
+    bottom: 0;
+    left: 0;
+
+    width: min(280px, 88vw);
+    height: auto;
+    max-height: calc(100dvh - 70px);
+
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    background: #fff;
+    z-index: 300;
+
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .sidebar .brand {
+    display: none;
+  }
+
+  .navigation {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .navItem {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+  }
+
+  .sidebarBottom {
+    flex-shrink: 0;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 16px;
+    box-sizing: border-box;
+  }
+
+  .logoutButton {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+  }
+
+  .main {
+    width: 100%;
+    min-width: 0;
+    min-height: 100dvh;
+    margin-left: 0;
+    padding: 100px 18px 40px;
+    box-sizing: border-box;
+  }
+
+  .topBar {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .topBar > div:first-child {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+
+  .main form {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .field,
+  .fullWidth {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .formActions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    width: 100%;
+    margin-top: 24px;
+    padding-bottom: 24px;
+    box-sizing: border-box;
+  }
+
+  .saveButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 92px 14px 32px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .topBar h1 {
+    font-size: 25px;
+  }
+}

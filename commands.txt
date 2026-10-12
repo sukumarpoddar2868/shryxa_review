@@ -3,5 +3,4 @@
 
 
 
-psql "host=shryxa-review-db-mumbai.c3yiamq2ykzf.ap-south-1.rds.amazo
-naws.com port=5432 dbname=postgres user=shryxa_admin sslmode=verify-full sslrootcert=./global-bundle.pem"
+psql "host=shryxa-review-db-mumbai.c3yiamq2ykzf.ap-south-1.rds.amazonaws.com port=5432 dbname=postgres user=shryxa_admin sslmode=require"

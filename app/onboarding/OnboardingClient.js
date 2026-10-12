@@ -7,7 +7,7 @@ import { createAccount } from "@/lib/services/accountService";
 import { useEffect,useState } from "react";
 import Link from "next/link";
 import styles from "./onboarding.module.css";
-
+import QRCode from "qrcode";
 const initialForm = {
   // User
   fullName: "",
@@ -50,6 +50,11 @@ export default function OnboardingClient() {
   const [businessCreated, setBusinessCreated] = useState(false);
   const [businessId, setBusinessId] = useState(null);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  const [qrImage, setQrImage] = useState("");
+  const [qrDestinationUrl, setQrDestinationUrl] = useState("");
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
 
   useEffect(() => {
     const scriptUrl = "https://checkout.razorpay.com/v1/checkout.js";
@@ -211,7 +216,95 @@ export default function OnboardingClient() {
   // ============================================================
   // PHASE 2 → PAYMENT
   // ============================================================
+async function downloadStandeePDF(format) {
+  if (!businessId) {
+    setQrError("Business information is missing.");
+    return;
+  }
 
+  setQrError("");
+
+  try {
+    const response = await fetch("/api/qr/standee", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        businessId,
+        format,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Unable to download the standee PDF.");
+    }
+
+    const pdfBlob = await response.blob();
+    const downloadUrl = URL.createObjectURL(pdfBlob);
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download =
+      format === "4x6"
+        ? "shryxa-review-standee-4x6-inch.pdf"
+        : "shryxa-review-standee-12x12-cm.pdf";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error("Standee download error:", error);
+    setQrError(error.message || "Unable to download the standee PDF.");
+  }
+}
+
+  async function generateBusinessQR() {
+  if (!businessId) {
+    setQrError("Business information is missing. Please contact support.");
+    return;
+  }
+
+  setQrLoading(true);
+  setQrError("");
+
+  try {
+    const response = await fetch("/api/qr", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ businessId }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.qrCode?.destinationUrl) {
+      throw new Error(data.error || "Unable to generate your QR code.");
+    }
+
+    const image = await QRCode.toDataURL(data.qrCode.destinationUrl, {
+      errorCorrectionLevel: "H",
+      width: 1000,
+      margin: 4,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+
+    setQrImage(image);
+    setQrDestinationUrl(data.qrCode.destinationUrl);
+  } catch (error) {
+    console.error("QR generation error:", error);
+    setQrError(error.message || "Unable to generate your QR code.");
+  } finally {
+    setQrLoading(false);
+  }
+}
   async function processPayment() {
     if (paymentProcessing) return;
 
@@ -304,8 +397,12 @@ export default function OnboardingClient() {
             }
 
             // 4. Show success only after backend verification.
-            setPhase(3);
+            // Payment is verified and the subscription is active.
             setQrGenerated(true);
+            setPhase(3);
+
+            // Generate or retrieve the real business QR.
+            await generateBusinessQR();
           } catch (error) {
             console.error("Payment verification error:", error);
             alert(
@@ -925,25 +1022,34 @@ export default function OnboardingClient() {
               {/* QR SECTION */}
 
               <div className={styles.qrSection}>
-                <div className={styles.qrPlaceholder}>
-                  <div className={styles.qrPattern}>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                {qrLoading ? (
+                  <p>Generating your QR code...</p>
+                ) : qrImage ? (
+                  <img
+                    src={qrImage}
+                    alt="Your business review QR code"
+                    className={styles.generatedQR}
+                  />
+                ) : (
+                  <div>
+                    <p>{qrError || "Your QR code is not available yet."}</p>
+
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={generateBusinessQR}
+                      disabled={qrLoading}
+                    >
+                      Try Again
+                    </button>
                   </div>
-                </div>
+                )}
 
                 <h3>Scan to review</h3>
 
                 <p>
-                  Customers can scan this QR code to start their Shryxa review
-                  experience.
+                  Customers can scan this QR code to open your Shryxa review
+                  page and continue to your Google Review page.
                 </p>
               </div>
 
@@ -964,11 +1070,39 @@ export default function OnboardingClient() {
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => alert("QR download will be connected later.")}
+                  onClick={() => {
+                    if (!qrImage) {
+                      setQrError(
+                        "Generate your QR code before downloading it.",
+                      );
+                      return;
+                    }
+
+                    const link = document.createElement("a");
+                    link.href = qrImage;
+                    link.download = "shryxa-review-qr.png";
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  }}
                 >
                   Download QR
                 </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => downloadStandeePDF("4x6")}
+                >
+                  Download Portrait Standee
+                </button>
 
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => downloadStandeePDF("12x12cm")}
+                >
+                  Download Square Standee
+                </button>
                 <Link href="/client/dashboard" className={styles.primaryButton}>
                   Go to Dashboard
                   <span>→</span>

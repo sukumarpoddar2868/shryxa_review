@@ -1,97 +1,292 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import styles from "./recharge.module.css";
+import { createSubscriptionRequest } from "@/lib/services/subscriptionClient";
+
+const MENU_ITEMS = [
+  { label: "Dashboard", href: "/client/dashboard", icon: "⌂" },
+  { label: "QR Code", href: "/client/qr", icon: "▦" },
+  { label: "Subscription", href: "/client/recharge", icon: "↻" },
+  { label: "Profile", href: "/client/profile", icon: "◯" },
+];
+
+function formatDate(value) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatAmount(amount, currency = "INR") {
+  const value = Number(amount);
+
+  if (!Number.isFinite(value)) return "—";
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function getStatusClass(status) {
+  switch (status?.toUpperCase()) {
+    case "ACTIVE":
+    case "SUCCESS":
+      return "success";
+    case "PENDING":
+    case "CREATED":
+    case "AUTHENTICATED":
+      return "pending";
+    case "FAILED":
+    case "HALTED":
+    case "CANCELLED":
+    case "EXPIRED":
+      return "failed";
+    default:
+      return "neutral";
+  }
+}
 
 export default function RechargePage() {
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState(100);
+  const [business, setBusiness] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const businessName = "Your Business";
+  useEffect(() => {
+    const scriptUrl = "https://checkout.razorpay.com/v1/checkout.js";
+    let script = document.querySelector(`script[src="${scriptUrl}"]`);
 
-  // Temporary frontend values.
-  // These will come from the backend later.
-  const currentBalance = 28;
-  const totalPurchased = 100;
-  const used = totalPurchased - currentBalance;
+    function handleLoad() {
+      script.dataset.loaded = "true";
+      setRazorpayLoaded(true);
+    }
 
-  const usagePercentage = (used / totalPurchased) * 100;
+    function handleError() {
+      setRazorpayLoaded(false);
+      setError("Unable to load the payment gateway. Please refresh the page.");
+    }
 
-  const packages = [
-    {
-      tokens: 50,
-      price: 99,
-    },
-    {
-      tokens: 100,
-      price: 179,
-      popular: true,
-    },
-    {
-      tokens: 250,
-      price: 399,
-    },
-    {
-      tokens: 500,
-      price: 699,
-    },
-  ];
+    if (script?.dataset.loaded === "true") {
+      setRazorpayLoaded(true);
+      return;
+    }
 
-  const menuItems = [
-    {
-      label: "Dashboard",
-      href: "/client/dashboard",
-      icon: "⌂",
-    },
-    {
-      label: "QR Code",
-      href: "/client/qr",
-      icon: "▦",
-    },
-    {
-      label: "Recharge",
-      href: "/client/recharge",
-      icon: "↻",
-      active: true,
-    },
-    {
-      label: "Profile",
-      href: "/client/profile",
-      icon: "◯",
-    },
-  ];
+    if (!script) {
+      script = document.createElement("script");
+      script.src = scriptUrl;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    script.addEventListener("load", handleLoad);
+    script.addEventListener("error", handleError);
+
+    return () => {
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
+    };
+  }, []);
+
+  const loadSubscription = useCallback(async (businessId) => {
+    const response = await fetch(
+      `/api/payments/subscription?businessId=${encodeURIComponent(businessId)}`,
+      { cache: "no-store" },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to load subscription details.");
+    }
+
+    setBusiness((current) => ({
+      ...(current || {}),
+      ...(data.business || {}),
+    }));
+
+    setSubscription(data.subscription || null);
+    setPayments(Array.isArray(data.payments) ? data.payments : []);
+  }, []);
+
+  const loadBusiness = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/business", {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to load your business.");
+      }
+
+      const businesses = Array.isArray(data)
+        ? data
+        : data.businesses || data.data || [];
+
+      if (businesses.length === 0) {
+        setBusiness(null);
+        setSubscription(null);
+        setPayments([]);
+        return;
+      }
+
+      const selectedBusiness = businesses[0];
+      setBusiness(selectedBusiness);
+
+      await loadSubscription(selectedBusiness.id);
+    } catch (err) {
+      setError(err.message || "Unable to load subscription details.");
+    } finally {
+      setLoading(false);
+    }
+  }, [loadSubscription]);
+
+  useEffect(() => {
+    loadBusiness();
+  }, [loadBusiness]);
+
+  async function startSubscription() {
+    if (!business?.id) {
+      setError("No business was found for your account.");
+      return;
+    }
+
+    if (subscription?.status === "ACTIVE") {
+      setError("Your business already has an active subscription.");
+      return;
+    }
+
+    if (!razorpayLoaded || !window.Razorpay) {
+      setError("The payment gateway is still loading. Please try again.");
+      return;
+    }
+
+    setPaymentProcessing(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const checkout = await createSubscriptionRequest(business.id);
+
+      if (!checkout.keyId || !checkout.subscriptionId) {
+        throw new Error("The server did not return valid checkout details.");
+      }
+
+      const options = {
+        key: checkout.keyId,
+        subscription_id: checkout.subscriptionId,
+        name: "Shryxa Review",
+        description: "Monthly subscription — ₹199",
+        handler: async (response) => {
+          try {
+            const verificationResponse = await fetch(
+              "/api/payments/verify",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(response),
+              },
+            );
+
+            const verification = await verificationResponse.json();
+
+            if (!verificationResponse.ok || !verification.verified) {
+              setError(
+                verification.message ||
+                  "Payment verification failed. Please contact support before retrying.",
+              );
+              return;
+            }
+
+            if (!verification.active) {
+              setNotice(
+                "Your payment details were received, but the subscription is not active yet. Please refresh later.",
+              );
+              await loadSubscription(business.id);
+              return;
+            }
+
+            setNotice("Payment verified and subscription activated.");
+            await loadSubscription(business.id);
+          } catch (err) {
+            setError(
+              err.message ||
+                "We could not verify your payment. Please contact support before retrying.",
+            );
+          } finally {
+            setPaymentProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setPaymentProcessing(false),
+        },
+        theme: {
+          color: "#1f6334",
+        },
+      };
+
+      const checkoutWindow = new window.Razorpay(options);
+
+      checkoutWindow.on("payment.failed", (event) => {
+        setError(
+          event.error?.description ||
+            "Payment failed. You can try again when ready.",
+        );
+        setPaymentProcessing(false);
+      });
+
+      checkoutWindow.open();
+    } catch (err) {
+      setError(err.message || "Unable to start checkout.");
+      setPaymentProcessing(false);
+    }
+  }
+
+  const activeSubscription = subscription?.status === "ACTIVE";
 
   return (
     <div className={styles.page}>
-      {/* =========================
-          MOBILE HEADER
-      ========================== */}
       <header className={styles.mobileHeader}>
         <Link href="/" className={styles.mobileBrand}>
           <span className={styles.logoBox}>
-            <img
-              src="/shryxa-logo.png"
-              alt="Shryxa Review"
-            />
+            <img src="/shryxa-logo.png" alt="Shryxa Review" />
           </span>
-
           <span>Shryxa</span>
         </Link>
 
         <button
           type="button"
           className={styles.menuButton}
-          onClick={() => setMobileMenu(!mobileMenu)}
+          onClick={() => setMobileMenu((value) => !value)}
           aria-label="Toggle navigation"
         >
           {mobileMenu ? "×" : "☰"}
         </button>
       </header>
 
-      {/* =========================
-          SIDEBAR
-      ========================== */}
       <aside
         className={`${styles.sidebar} ${
           mobileMenu ? styles.sidebarOpen : ""
@@ -99,29 +294,22 @@ export default function RechargePage() {
       >
         <Link href="/" className={styles.brand}>
           <span className={styles.logoBox}>
-            <img
-              src="/shryxa-logo.png"
-              alt="Shryxa Review"
-            />
+            <img src="/shryxa-logo.png" alt="Shryxa Review" />
           </span>
-
           <span>Shryxa</span>
         </Link>
 
         <nav className={styles.navigation}>
-          {menuItems.map((item) => (
+          {MENU_ITEMS.map((item) => (
             <Link
               key={item.label}
               href={item.href}
               className={`${styles.navItem} ${
-                item.active ? styles.active : ""
+                item.href === "/client/recharge" ? styles.active : ""
               }`}
               onClick={() => setMobileMenu(false)}
             >
-              <span className={styles.navIcon}>
-                {item.icon}
-              </span>
-
+              <span className={styles.navIcon}>{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           ))}
@@ -131,184 +319,180 @@ export default function RechargePage() {
           <button
             type="button"
             className={styles.logoutButton}
+            onClick={() => signOut({ callbackUrl: "/login" })}
           >
             <span className={styles.navIcon}>↪</span>
-
             <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      {/* =========================
-          MAIN
-      ========================== */}
       <main className={styles.main}>
-        {/* Top bar */}
         <div className={styles.topBar}>
           <div>
-            <p className={styles.eyebrow}>RECHARGE</p>
-
-            <h1>Recharge</h1>
-
+            <p className={styles.eyebrow}>ACCOUNT BILLING</p>
+            <h1>Subscription & Payments</h1>
             <p className={styles.businessName}>
-              {businessName}
+              {business?.shopName || "Your business"}
             </p>
           </div>
 
           <div className={styles.profileCircle}>
-            S
+            {(business?.shopName || "S").charAt(0).toUpperCase()}
           </div>
         </div>
 
-        {/* =========================
-            CURRENT BALANCE
-        ========================== */}
-        <section className={styles.balanceCard}>
-          <div className={styles.balanceInfo}>
-            <span className={styles.balanceLabel}>
-              Current recharge
-            </span>
-
-            <div className={styles.balanceNumber}>
-              {currentBalance}
-              <span> reviews</span>
-            </div>
+        {error && (
+          <div role="alert" className={styles.messageError}>
+            {error}
           </div>
+        )}
 
-          <div className={styles.balanceUsage}>
-            <div className={styles.usageTop}>
-              <span>Monthly usage</span>
-
-              <strong>
-                {Math.round(usagePercentage)}%
-              </strong>
-            </div>
-
-            <div className={styles.usageTrack}>
-              <div
-                className={styles.usageBar}
-                style={{
-                  width: `${usagePercentage}%`,
-                }}
-              />
-            </div>
-
-            <div className={styles.usageBottom}>
-              <span>{used} used</span>
-
-              <span>{currentBalance} remaining</span>
-            </div>
+        {notice && (
+          <div role="status" className={styles.messageSuccess}>
+            {notice}
           </div>
-        </section>
+        )}
 
-        {/* =========================
-            PACKAGE SECTION
-        ========================== */}
-        <section className={styles.packageSection}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionEyebrow}>
-              RECHARGE PLANS
-            </p>
-
-            <h2>Choose your recharge</h2>
-
-            <p>
-              Select the number of review credits you want
-              to add.
-            </p>
-          </div>
-
-          <div className={styles.packageGrid}>
-            {packages.map((pkg) => {
-              const selected =
-                selectedPackage === pkg.tokens;
-
-              return (
-                <button
-                  key={pkg.tokens}
-                  type="button"
-                  className={`${styles.packageCard} ${
-                    selected ? styles.packageSelected : ""
+        {loading ? (
+          <section className={styles.paymentCard}>
+            <p>Loading subscription details…</p>
+          </section>
+        ) : !business ? (
+          <section className={styles.paymentCard}>
+            <h2>No business found</h2>
+            <p>Create a business before managing its subscription.</p>
+            <Link href="/onboarding">Set up your business</Link>
+          </section>
+        ) : (
+          <>
+            <section className={styles.balanceCard}>
+              <div className={styles.balanceInfo}>
+                <span className={styles.balanceLabel}>
+                  Subscription status
+                </span>
+                <div className={styles.balanceNumber}>
+                  {subscription?.status || "NOT SUBSCRIBED"}
+                </div>
+                <span
+                  className={`${styles.statusBadge} ${
+                    styles[getStatusClass(subscription?.status)]
                   }`}
-                  onClick={() =>
-                    setSelectedPackage(pkg.tokens)
-                  }
                 >
-                  {pkg.popular && (
-                    <span className={styles.popularBadge}>
-                      Popular
-                    </span>
-                  )}
+                  {subscription?.status || "No subscription"}
+                </span>
+              </div>
 
-                  <div className={styles.packageTokens}>
-                    {pkg.tokens}
-                  </div>
+              <div className={styles.balanceUsage}>
+                <p className={styles.sectionEyebrow}>MONTHLY PLAN</p>
+                <div className={styles.balanceNumber}>
+                  ₹{Number(subscription?.amount ?? 199).toLocaleString("en-IN")}
+                  <span> / month</span>
+                </div>
+                <p>
+                  {subscription?.planName || "MONTHLY"} ·{" "}
+                  {subscription?.interval || "MONTHLY"}
+                </p>
+                <p>
+                  Next billing: {formatDate(subscription?.nextBillingAt)}
+                </p>
+              </div>
+            </section>
 
-                  <div className={styles.packageLabel}>
-                    reviews
-                  </div>
+            <section className={styles.paymentCard}>
+              <p className={styles.sectionEyebrow}>SUBSCRIPTION DETAILS</p>
+              <h2>Your plan</h2>
 
-                  <div className={styles.packagePrice}>
-                    ₹{pkg.price}
-                  </div>
+              <div className={styles.summaryRow}>
+                <span>Business</span>
+                <strong>{business.shopName}</strong>
+              </div>
+              <div className={styles.summaryRow}>
+                <span>Subscription started</span>
+                <strong>{formatDate(subscription?.startDate)}</strong>
+              </div>
+              <div className={styles.summaryRow}>
+                <span>Current billing period ends</span>
+                <strong>{formatDate(subscription?.currentPeriodEnd)}</strong>
+              </div>
+              <div className={styles.summaryRow}>
+                <span>Cancellation at period end</span>
+                <strong>
+                  {subscription
+                    ? subscription.cancelAtPeriodEnd
+                      ? "Yes"
+                      : "No"
+                    : "—"}
+                </strong>
+              </div>
 
-                  <div className={styles.packageSelect}>
-                    {selected ? "Selected" : "Select"}
-                  </div>
+              {activeSubscription ? (
+                <p>
+                  Your subscription is active. You can continue using your
+                  Shryxa Review subscription.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.payButton}
+                  onClick={startSubscription}
+                  disabled={paymentProcessing || !razorpayLoaded}
+                >
+                  {paymentProcessing
+                    ? "Processing…"
+                    : !razorpayLoaded
+                      ? "Loading payment gateway…"
+                      : subscription
+                        ? "Retry Subscription Payment"
+                        : "Subscribe Now — ₹199/month"}
+                  <span>→</span>
                 </button>
-              );
-            })}
-          </div>
-        </section>
+              )}
+            </section>
 
-        {/* =========================
-            PAYMENT SUMMARY
-        ========================== */}
-        <section className={styles.paymentCard}>
-          <div>
-            <p className={styles.sectionEyebrow}>
-              PAYMENT
-            </p>
+            <section className={styles.paymentCard}>
+              <p className={styles.sectionEyebrow}>TRANSACTION RECORDS</p>
+              <h2>Payment history</h2>
 
-            <h2>Recharge summary</h2>
-          </div>
-
-          <div className={styles.summaryRow}>
-            <span>Current balance</span>
-
-            <strong>{currentBalance} reviews</strong>
-          </div>
-
-          <div className={styles.summaryRow}>
-            <span>Selected recharge</span>
-
-            <strong>{selectedPackage} reviews</strong>
-          </div>
-
-          <div className={styles.summaryDivider} />
-
-          <div className={styles.summaryTotal}>
-            <span>Total amount</span>
-
-            <strong>
-              ₹
-              {
-                packages.find(
-                  (pkg) => pkg.tokens === selectedPackage
-                )?.price
-              }
-            </strong>
-          </div>
-
-          <button
-            type="button"
-            className={styles.payButton}
-          >
-            Continue to Payment
-
-            <span>→</span>
-          </button>
-        </section>
+              {payments.length === 0 ? (
+                <p>No payment records are available yet.</p>
+              ) : (
+                <div className={styles.tableWrapper}>
+                  <table className={styles.paymentTable}>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map((payment) => (
+                        <tr key={payment.id}>
+                          <td>
+                            {formatDate(payment.paidAt || payment.createdAt)}
+                          </td>
+                          <td>
+                            {formatAmount(payment.amount, payment.currency)}
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.statusBadge} ${
+                                styles[getStatusClass(payment.status)]
+                              }`}
+                            >
+                              {payment.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

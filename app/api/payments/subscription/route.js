@@ -354,3 +354,115 @@ export async function POST(request) {
     );
   }
 }
+
+export async function GET(request) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return Response.json(
+        { message: "Please log in first." },
+        { status: 401 },
+      );
+    }
+
+    const ownerId = Number(session.user.id);
+
+    if (!Number.isSafeInteger(ownerId) || ownerId <= 0) {
+      return Response.json(
+        { message: "Invalid authenticated user." },
+        { status: 401 },
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const requestedBusinessId = searchParams.get("businessId");
+
+    let businessId;
+
+    if (requestedBusinessId !== null) {
+      businessId = Number(requestedBusinessId);
+
+      if (!Number.isSafeInteger(businessId) || businessId <= 0) {
+        return Response.json(
+          { message: "Invalid business ID." },
+          { status: 400 },
+        );
+      }
+    }
+
+    const business = await prisma.business.findFirst({
+      where: {
+        ownerId,
+        ...(businessId !== undefined ? { id: businessId } : {}),
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        shopName: true,
+        subscriptions: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+          select: {
+            id: true,
+            planName: true,
+            amount: true,
+            currency: true,
+            interval: true,
+            status: true,
+            startDate: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            nextBillingAt: true,
+            cancelAtPeriodEnd: true,
+            cancelledAt: true,
+            endedAt: true,
+            createdAt: true,
+          },
+        },
+        payments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 10,
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+            paidAt: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!business) {
+      return Response.json(
+        { message: "Business not found or access denied." },
+        { status: 404 },
+      );
+    }
+
+    return Response.json({
+      success: true,
+      business: {
+        id: business.id,
+        shopName: business.shopName,
+      },
+      subscription: business.subscriptions[0] ?? null,
+      payments: business.payments,
+    });
+  } catch (error) {
+    console.error("Fetch subscription status error:", error);
+
+    return Response.json(
+      { message: "Unable to fetch subscription details." },
+      { status: 500 },
+    );
+  }
+}

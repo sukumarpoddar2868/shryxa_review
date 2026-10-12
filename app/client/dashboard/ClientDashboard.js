@@ -1,77 +1,151 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import styles from "./dashboard.module.css";
 
 export default function ClientDashboard() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [mobileMenu, setMobileMenu] = useState(false);
 
-  // Temporary mock data.
-  // Later these values will come from the backend/database.
-  const businessName = "Your Business";
+  const [business, setBusiness] = useState(null);
+  const [loadingBusiness, setLoadingBusiness] = useState(true);
+  const [businessError, setBusinessError] = useState("");
 
-  const totalRecharge = 100;
-  const reviewsUsed = 72;
-  const reviewsRemaining = totalRecharge - reviewsUsed;
+  const [qrCode, setQrCode] = useState(null);
+  const [loadingQR, setLoadingQR] = useState(false);
+  const [qrError, setQrError] = useState("");
 
-  // Overall monthly usage
-  const usageProgress = (reviewsUsed / totalRecharge) * 100;
+  // Temporary recharge values.
+  // We will connect these after verifying the usage-tracking design.
 
-  // Remaining recharge percentage
-  const remainingProgress = (reviewsRemaining / totalRecharge) * 100;
 
-  // Color of remaining recharge bar
-  const getRemainingBarClass = () => {
-    if (remainingProgress <= 20) {
-      return styles.barRed;
-    }
 
-    if (remainingProgress <= 50) {
-      return styles.barOrange;
-    }
-
-    if (remainingProgress <= 80) {
-      return styles.barLightBlue;
-    }
-
-    return styles.barBlue;
-  };
 
   const menuItems = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: "⌂",
+      href: "/client/dashboard",
     },
-    {
-      id: "qr",
-      label: "QR Code",
-      icon: "▦",
-    },
-    {
-      id: "recharge",
-      label: "Recharge",
-      icon: "↻",
-    },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: "◯",
-    },
+    { id: "qr", label: "QR Code", icon: "▦", href: "/client/qr" },
+    { id: "recharge", label: "Recharge", icon: "↻", href: "/client/recharge" },
+    { id: "profile", label: "Profile", icon: "◯", href: "/client/profile" },
   ];
 
-  const handleMenuClick = (menuId) => {
+  // Fetch the authenticated user's businesses.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchBusiness() {
+      try {
+        setLoadingBusiness(true);
+        setBusinessError("");
+
+        const response = await fetch("/api/business", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || data.message || "Unable to load business details.",
+          );
+        }
+
+        if (!cancelled) {
+          const businesses = data.businesses || [];
+
+          if (businesses.length === 0) {
+            setBusiness(null);
+            setBusinessError(
+              "No business found. Please complete your business setup.",
+            );
+          } else {
+            // Use the most recently created business.
+            setBusiness(businesses[0]);
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setBusinessError(
+            error.message || "Unable to load your business details.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingBusiness(false);
+        }
+      }
+    }
+
+    fetchBusiness();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fetch or generate the QR for the selected business.
+  async function fetchQR() {
+    if (!business?.id) {
+      setQrError("Your business details are not available.");
+      return;
+    }
+
+    try {
+      setLoadingQR(true);
+      setQrError("");
+      setQrCode(null);
+
+      const response = await fetch("/api/qr", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessId: business.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Unable to retrieve your QR code.",
+        );
+      }
+
+      setQrCode(data.qrCode);
+    } catch (error) {
+      setQrError(error.message || "Unable to retrieve your QR code.");
+    } finally {
+      setLoadingQR(false);
+    }
+  }
+
+
+  function handleMenuClick(menuId) {
     setActiveMenu(menuId);
     setMobileMenu(false);
+
+    if (menuId === "qr") {
+      fetchQR();
+    }
+  }
+
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/login",
+    });
   };
 
   return (
     <div className={styles.dashboard}>
-      {/* =========================
-          MOBILE HEADER
-      ========================== */}
+      {/* MOBILE HEADER */}
       <header className={styles.mobileHeader}>
         <Link href="/" className={styles.mobileBrand}>
           <span className={styles.logoBox}>
@@ -82,23 +156,22 @@ export default function ClientDashboard() {
         </Link>
 
         <button
+          type="button"
           className={styles.menuButton}
           onClick={() => setMobileMenu(!mobileMenu)}
           aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenu}
         >
           {mobileMenu ? "×" : "☰"}
         </button>
       </header>
 
-      {/* =========================
-          SIDEBAR
-      ========================== */}
-      <aside
+      {/* SIDEBAR */}
+            <aside
         className={`${styles.sidebar} ${
           mobileMenu ? styles.sidebarOpen : ""
         }`}
       >
-        {/* Brand */}
         <Link href="/" className={styles.brand}>
           <span className={styles.logoBox}>
             <img src="/shryxa-logo.png" alt="Shryxa Review" />
@@ -107,172 +180,127 @@ export default function ClientDashboard() {
           <span className={styles.brandText}>Shryxa</span>
         </Link>
 
-        {/* Navigation */}
         <nav className={styles.navigation}>
           {menuItems.map((item) => (
-            <button
+            <Link
               key={item.id}
-              type="button"
+              href={item.href}
               className={`${styles.navItem} ${
-                activeMenu === item.id ? styles.active : ""
+                item.id === "dashboard" ? styles.active : ""
               }`}
-              onClick={() => handleMenuClick(item.id)}
             >
               <span className={styles.navIcon}>{item.icon}</span>
-
               <span>{item.label}</span>
-            </button>
+            </Link>
           ))}
         </nav>
 
-        {/* Logout */}
+        {/* Logout belongs inside the sidebar */}
         <div className={styles.sidebarBottom}>
           <button
             type="button"
             className={styles.logoutButton}
-            onClick={() => {
-              // Logout functionality will be connected later.
-            }}
+            onClick={handleLogout}
           >
             <span className={styles.navIcon}>↪</span>
-
             <span>Logout</span>
           </button>
         </div>
       </aside>
-
-      {/* =========================
-          MAIN CONTENT
-      ========================== */}
+      {/* MAIN CONTENT */}
       <main className={styles.main}>
-        {/* Top bar */}
         <div className={styles.topBar}>
           <div>
             <p className={styles.eyebrow}>CLIENT DASHBOARD</p>
 
-            <h1>Welcome back</h1>
+            <h1>
+              {activeMenu === "dashboard"
+                ? "Welcome back"
+                : menuItems.find((item) => item.id === activeMenu)?.label}
+            </h1>
 
-            <p className={styles.businessName}>{businessName}</p>
-          </div>
-
-          <div className={styles.profileCircle}>S</div>
-        </div>
-
-        {/* =========================
-            RECHARGE SECTION
-        ========================== */}
-        <section className={styles.rechargeSection}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className={styles.sectionEyebrow}>RECHARGE</p>
-
-              <h2>Your review growth</h2>
-
-              <p>
-                Track your monthly review usage and remaining recharge.
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.rechargeCard}>
-            {/* Monthly usage */}
-            <div className={styles.progressHeader}>
-              <div className={styles.progressInfo}>
-                <span className={styles.label}>
-                  Reviews this month
-                </span>
-
-                <strong>
-                  {reviewsUsed} / {totalRecharge}
-                </strong>
-              </div>
-
-              <span className={styles.percentage}>
-                {Math.round(usageProgress)}%
-              </span>
-            </div>
-
-            {/* Usage progress */}
-            <div className={styles.progressTrack}>
-              <div
-                className={styles.progressBar}
-                style={{
-                  width: `${usageProgress}%`,
-                }}
-              />
-            </div>
-
-            <div className={styles.progressFooter}>
-              <span>{reviewsUsed} reviews used</span>
-
-              <span>{reviewsRemaining} remaining</span>
-            </div>
-
-            {/* =========================
-                REMAINING RECHARGE
-            ========================== */}
-            <div className={styles.rechargeBottom}>
-              <div className={styles.remainingContainer}>
-                <span className={styles.remainingLabel}>
-                  Recharge remaining
-                </span>
-
-                <div className={styles.remainingNumber}>
-                  {reviewsRemaining}
-
-                  <span> reviews</span>
-                </div>
-
-                {/* Remaining recharge color bar */}
-                <div className={styles.remainingProgressTrack}>
-                  <div
-                    className={`${styles.remainingProgressBar} ${getRemainingBarClass()}`}
-                    style={{
-                      width: `${remainingProgress}%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Recharge button */}
-              <button
-                type="button"
-                className={styles.rechargeButton}
-              >
-                Recharge Now
-
-                <span>↗</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================
-            QR SECTION
-        ========================== */}
-        <section className={styles.qrSection}>
-          <div>
-            <p className={styles.sectionEyebrow}>QR CODE</p>
-
-            <h2>Your review QR is active</h2>
-
-            <p>
-              Customers can scan your QR code to start the Shryxa
-              review flow.
+            <p className={styles.businessName}>
+              {loadingBusiness
+                ? "Loading business..."
+                : business?.shopName || "Your Business"}
             </p>
           </div>
 
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={() => handleMenuClick("qr")}
-          >
-            View QR
+          <div className={styles.profileCircle}>
+            {(business?.ownerName || business?.shopName || "S")
+              .charAt(0)
+              .toUpperCase()}
+          </div>
+        </div>
 
-            <span>→</span>
-          </button>
-        </section>
+        {/* BUSINESS LOADING AND ERROR MESSAGES */}
+        {loadingBusiness && (
+          <p role="status">Loading your business details...</p>
+        )}
+
+        {!loadingBusiness && businessError && (
+          <p role="alert">{businessError}</p>
+        )}
+
+        {/* DASHBOARD VIEW */}
+        {activeMenu === "dashboard" && (
+          <>
+            <section className={styles.rechargeSection}>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <p className={styles.sectionEyebrow}>SUBSCRIPTION</p>
+                  <h2>Your Shryxa subscription</h2>
+                  <p>Manage your subscription and view your payment history.</p>
+                </div>
+              </div>
+
+              <div className={styles.rechargeCard}>
+                <div className={styles.rechargeBottom}>
+                  <div className={styles.remainingContainer}>
+                    <span className={styles.remainingLabel}>
+                      Monthly subscription
+                    </span>
+
+                    <div className={styles.remainingNumber}>
+                      ₹199
+                      <span>/ month</span>
+                    </div>
+
+                    <p>
+                      Review usage statistics will appear here when usage
+                      tracking is implemented.
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/client/recharge"
+                    className={styles.rechargeButton}
+                  >
+                    View Subscription <span>↗</span>
+                  </Link>
+                </div>
+              </div>
+            </section>
+
+            <section className={styles.qrSection}>
+              <div>
+                <p className={styles.sectionEyebrow}>QR CODE</p>
+                <h2>Your review QR code</h2>
+
+                <p>
+                  Customers can scan your QR code to open your Shryxa review
+                  page.
+                </p>
+              </div>
+
+              <Link href="/client/qr" className={styles.secondaryButton}>
+                View QR <span>→</span>
+              </Link>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
 }
+

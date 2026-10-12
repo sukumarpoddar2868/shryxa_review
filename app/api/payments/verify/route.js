@@ -3,6 +3,40 @@ import prisma from "../../../../lib/prisma.js";
 import { getRazorpayClient } from "../../../../lib/payments/razorpay.js";
 import { verifySubscriptionSignature } from "../../../../lib/payments/paymentService.js";
 
+async function verifyPaymentSubscriptionAssociation({
+  razorpay,
+  payment,
+  paymentId,
+  subscriptionId,
+}) {
+  // Case 1: Razorpay provides the subscription ID directly.
+  if (payment.subscription_id) {
+    return (
+      payment.subscription_id === subscriptionId &&
+      payment.id === paymentId
+    );
+  }
+
+  // Case 2: The payment response omits subscription_id.
+  // Verify the association through Razorpay's invoices.
+  const result = await razorpay.invoices.all({
+    subscription_id: subscriptionId,
+    count: 100,
+  });
+
+  const invoices = result.items ?? [];
+
+  const matchingInvoice = invoices.find(
+    (invoice) =>
+      invoice.payment_id === paymentId &&
+      invoice.subscription_id === subscriptionId &&
+      invoice.status === "paid" &&
+      invoice.amount === payment.amount,
+  );
+
+  return Boolean(matchingInvoice);
+}
+
 export async function POST(request) {
   try {
     // 1. Authenticate the user.
@@ -15,7 +49,7 @@ export async function POST(request) {
       );
     }
 
-    // 2. Validate the checkout response.
+    // 2. Validate the Razorpay checkout response.
     const body = await request.json();
 
     const subscriptionId = body.razorpay_subscription_id;
@@ -36,7 +70,7 @@ export async function POST(request) {
       );
     }
 
-    // 3. Verify the Razorpay checkout signature.
+    // 3. Verify the checkout signature.
     const isValid = verifySubscriptionSignature({
       subscriptionId,
       paymentId,
@@ -50,7 +84,7 @@ export async function POST(request) {
       );
     }
 
-    // 4. Find the local subscription.
+    // 4. Find the subscription in our database.
     const localSubscription = await prisma.subscription.findUnique({
       where: { providerSubscriptionId: subscriptionId },
     });
@@ -62,7 +96,7 @@ export async function POST(request) {
       );
     }
 
-    // 5. Verify that the logged-in user owns the business.
+    // 5. Verify business ownership.
     const business = await prisma.business.findFirst({
       where: {
         id: localSubscription.businessId,
@@ -77,7 +111,7 @@ export async function POST(request) {
       );
     }
 
-    // 6. Fetch authoritative payment information from Razorpay.
+    // 6. Fetch authoritative records from Razorpay.
     const razorpay = getRazorpayClient();
 
     const [remoteSubscription, remotePayment] = await Promise.all([
@@ -85,6 +119,7 @@ export async function POST(request) {
       razorpay.payments.fetch(paymentId),
     ]);
 
+    // Verify that the subscription matches our local record.
     if (
       remoteSubscription.id !== subscriptionId ||
       remoteSubscription.plan_id !== localSubscription.providerPlanId
@@ -95,16 +130,46 @@ export async function POST(request) {
       );
     }
 
-    if (
-      remotePayment.id !== paymentId ||
-      remotePayment.subscription_id !== subscriptionId
-    ) {
+    // Verify payment identity and its association with the subscription.
+    if (remotePayment.id !== paymentId) {
       return Response.json(
-        { message: "Payment is not associated with this subscription." },
+        { message: "Payment details do not match." },
         { status: 400 },
       );
     }
 
+    let associationVerified;
+
+    try {
+      associationVerified = await verifyPaymentSubscriptionAssociation({
+        razorpay,
+        payment: remotePayment,
+        paymentId,
+        subscriptionId,
+      });
+    } catch (error) {
+      console.error("Unable to verify payment association:", error);
+
+      return Response.json(
+        {
+          message:
+            "Unable to verify the payment association with Razorpay. Please try again.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (!associationVerified) {
+      return Response.json(
+        {
+          message:
+            "Payment could not be verified against this subscription.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // 7. Only authorized or captured payments can proceed.
     if (!["authorized", "captured"].includes(remotePayment.status)) {
       return Response.json(
         {
@@ -115,7 +180,7 @@ export async function POST(request) {
       );
     }
 
-    // 7. Validate currency and expected payment amount.
+    // Validate payment currency and amount.
     if (
       remotePayment.currency !== "INR" ||
       !Number.isSafeInteger(remotePayment.amount) ||
@@ -134,6 +199,7 @@ export async function POST(request) {
     let standeeOrder = null;
     let isCombinedInitialPayment = false;
 
+    // The standee order ID was saved in the subscription notes.
     const standeeOrderIdValue =
       remoteSubscription.notes?.standeeOrderId;
 
@@ -193,8 +259,8 @@ export async function POST(request) {
       );
     }
 
-    // 8. Do not associate an existing Razorpay payment with
-    // a different business or subscription.
+    // 8. Prevent associating a payment with another business
+    // or subscription.
     const existingPayment = await prisma.payment.findUnique({
       where: { providerPaymentId: paymentId },
     });
@@ -209,7 +275,9 @@ export async function POST(request) {
       console.error("Payment association mismatch:", paymentId);
 
       return Response.json(
-        { message: "This payment is already associated with another record." },
+        {
+          message: "This payment is already associated with another record.",
+        },
         { status: 409 },
       );
     }
@@ -245,7 +313,7 @@ export async function POST(request) {
           },
         });
 
-        // Protect an already-associated payment from unexpected changes.
+        // Do not allow a payment to change ownership.
         if (
           payment.businessId !== localSubscription.businessId ||
           payment.subscriptionId !== localSubscription.id
@@ -253,7 +321,8 @@ export async function POST(request) {
           throw new Error("Payment association mismatch.");
         }
 
-        // Mark the standee paid only after a captured combined payment.
+        // Confirm the standee order only after the combined payment
+        // has been verified and captured.
         if (standeeOrder && isCombinedInitialPayment) {
           const currentOrder = await tx.order.findUnique({
             where: { id: standeeOrder.id },
@@ -272,7 +341,7 @@ export async function POST(request) {
       });
     }
 
-    // 10. Update subscription status from Razorpay's current state.
+    // 10. Update subscription status from Razorpay.
     const statusMap = {
       active: "ACTIVE",
       authenticated: "AUTHENTICATED",
