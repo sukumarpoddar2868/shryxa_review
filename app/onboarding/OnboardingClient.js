@@ -15,6 +15,16 @@ const initialForm = {
   phone: "",
   password: "",
 
+  // Standee delivery
+  recipientName: "",
+  recipientPhone: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  standeePinCode: "",
+  country: "India",
+
   // Business
   shopName: "",
   ownerName: "",
@@ -210,6 +220,30 @@ export default function OnboardingClient() {
       return;
     }
 
+    if (includeStandee) {
+      const requiredStandeeFields = {
+        recipientName: "Recipient name",
+        recipientPhone: "Recipient phone",
+        addressLine1: "Address line 1",
+        city: "City",
+        state: "State",
+        standeePinCode: "PIN code",
+        country: "Country",
+      };
+
+      for (const [field, label] of Object.entries(requiredStandeeFields)) {
+        if (!form[field]?.trim()) {
+          alert(`Please enter ${label} for standee delivery.`);
+          return;
+        }
+      }
+
+      if (!/^\d{6}$/.test(form.standeePinCode.trim())) {
+        alert("Please enter a valid 6-digit delivery PIN code.");
+        return;
+      }
+    }
+
     if (!razorpayLoaded || !window.Razorpay) {
       alert("Payment gateway is still loading. Please try again.");
       return;
@@ -219,7 +253,21 @@ export default function OnboardingClient() {
 
     try {
       // 1. Create the subscription through our backend.
-      const subscription = await createSubscriptionRequest(businessId);
+      const delivery = {
+        recipientName: form.recipientName,
+        recipientPhone: form.recipientPhone,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2,
+        city: form.city,
+        state: form.state,
+        standeePinCode: form.standeePinCode,
+        country: form.country,
+      };
+
+      const subscription = await createSubscriptionRequest(businessId, {
+        includeStandee,
+        delivery: includeStandee ? delivery : null,
+      });
 
       // 2. Open Razorpay Checkout.
       const options = {
@@ -695,6 +743,107 @@ export default function OnboardingClient() {
                 </span>
                 <strong>₹499</strong>
               </label>
+              {includeStandee && (
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label htmlFor="recipientName">Recipient Name *</label>
+                    <input
+                      id="recipientName"
+                      name="recipientName"
+                      value={form.recipientName}
+                      onChange={handleChange}
+                      placeholder="Name of the recipient"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="recipientPhone">Recipient Phone *</label>
+                    <input
+                      id="recipientPhone"
+                      name="recipientPhone"
+                      type="tel"
+                      value={form.recipientPhone}
+                      onChange={handleChange}
+                      placeholder="Delivery contact number"
+                      required
+                    />
+                  </div>
+
+                  <div className={`${styles.field} ${styles.fullWidth}`}>
+                    <label htmlFor="addressLine1">Address Line 1 *</label>
+                    <input
+                      id="addressLine1"
+                      name="addressLine1"
+                      value={form.addressLine1}
+                      onChange={handleChange}
+                      placeholder="House, building, street, area"
+                      required
+                    />
+                  </div>
+
+                  <div className={`${styles.field} ${styles.fullWidth}`}>
+                    <label htmlFor="addressLine2">Address Line 2</label>
+                    <input
+                      id="addressLine2"
+                      name="addressLine2"
+                      value={form.addressLine2}
+                      onChange={handleChange}
+                      placeholder="Landmark, apartment, etc. (optional)"
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="city">City *</label>
+                    <input
+                      id="city"
+                      name="city"
+                      value={form.city}
+                      onChange={handleChange}
+                      placeholder="City"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="state">State *</label>
+                    <input
+                      id="state"
+                      name="state"
+                      value={form.state}
+                      onChange={handleChange}
+                      placeholder="State"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="standeePinCode">Delivery PIN Code *</label>
+                    <input
+                      id="standeePinCode"
+                      name="standeePinCode"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={form.standeePinCode}
+                      onChange={handleChange}
+                      placeholder="6-digit PIN code"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="country">Country *</label>
+                    <input
+                      id="country"
+                      name="country"
+                      value={form.country}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className={styles.paymentTotal}>
                 <span>Initial payment</span>
@@ -741,8 +890,6 @@ export default function OnboardingClient() {
                   {!paymentProcessing && <span>→</span>}
                 </button>
               </div>
-
-
             </div>
           )}
 

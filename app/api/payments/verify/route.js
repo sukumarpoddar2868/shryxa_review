@@ -15,21 +15,28 @@ export async function POST(request) {
       );
     }
 
-    // 2. Read the Razorpay Checkout response.
+    // 2. Validate the checkout response.
     const body = await request.json();
 
     const subscriptionId = body.razorpay_subscription_id;
     const paymentId = body.razorpay_payment_id;
     const signature = body.razorpay_signature;
 
-    if (!subscriptionId || !paymentId || !signature) {
+    if (
+      typeof subscriptionId !== "string" ||
+      typeof paymentId !== "string" ||
+      typeof signature !== "string" ||
+      !subscriptionId ||
+      !paymentId ||
+      !signature
+    ) {
       return Response.json(
         { message: "Missing payment verification details." },
         { status: 400 },
       );
     }
 
-    // 3. Verify the Checkout signature.
+    // 3. Verify the Razorpay checkout signature.
     const isValid = verifySubscriptionSignature({
       subscriptionId,
       paymentId,
@@ -45,9 +52,7 @@ export async function POST(request) {
 
     // 4. Find the local subscription.
     const localSubscription = await prisma.subscription.findUnique({
-      where: {
-        providerSubscriptionId: subscriptionId,
-      },
+      where: { providerSubscriptionId: subscriptionId },
     });
 
     if (!localSubscription) {
@@ -57,7 +62,7 @@ export async function POST(request) {
       );
     }
 
-    // 5. Confirm that the logged-in user owns this business.
+    // 5. Verify that the logged-in user owns the business.
     const business = await prisma.business.findFirst({
       where: {
         id: localSubscription.businessId,
@@ -72,13 +77,14 @@ export async function POST(request) {
       );
     }
 
-    // 6. Fetch subscription details directly from Razorpay.
+    // 6. Fetch authoritative payment information from Razorpay.
     const razorpay = getRazorpayClient();
 
-    const remoteSubscription =
-      await razorpay.subscriptions.fetch(subscriptionId);
+    const [remoteSubscription, remotePayment] = await Promise.all([
+      razorpay.subscriptions.fetch(subscriptionId),
+      razorpay.payments.fetch(paymentId),
+    ]);
 
-    // Validate the subscription BEFORE recording any payment.
     if (
       remoteSubscription.id !== subscriptionId ||
       remoteSubscription.plan_id !== localSubscription.providerPlanId
@@ -89,12 +95,12 @@ export async function POST(request) {
       );
     }
 
-    // 7. Fetch and validate the payment.
-    const remotePayment = await razorpay.payments.fetch(paymentId);
-
-    if (remotePayment.id !== paymentId) {
+    if (
+      remotePayment.id !== paymentId ||
+      remotePayment.subscription_id !== subscriptionId
+    ) {
       return Response.json(
-        { message: "Payment details do not match." },
+        { message: "Payment is not associated with this subscription." },
         { status: 400 },
       );
     }
@@ -102,59 +108,207 @@ export async function POST(request) {
     if (!["authorized", "captured"].includes(remotePayment.status)) {
       return Response.json(
         {
-          message: "The payment has not been authorized or captured.",
+          message: "Payment has not been authorized or captured.",
           paymentStatus: remotePayment.status,
         },
         { status: 400 },
       );
     }
 
-    // 8. Record captured payments.
-    // Note: Captured does not by itself prove subscription activation.
-    if (remotePayment.status === "captured") {
-      await prisma.payment.upsert({
+    // 7. Validate currency and expected payment amount.
+    if (
+      remotePayment.currency !== "INR" ||
+      !Number.isSafeInteger(remotePayment.amount) ||
+      remotePayment.amount <= 0
+    ) {
+      return Response.json(
+        { message: "Invalid payment amount or currency." },
+        { status: 400 },
+      );
+    }
+
+    const subscriptionAmountPaise = Math.round(
+      Number(localSubscription.amount) * 100,
+    );
+
+    let standeeOrder = null;
+    let isCombinedInitialPayment = false;
+
+    const standeeOrderIdValue =
+      remoteSubscription.notes?.standeeOrderId;
+
+    if (standeeOrderIdValue) {
+      const standeeOrderId = Number(standeeOrderIdValue);
+
+      if (
+        !Number.isSafeInteger(standeeOrderId) ||
+        standeeOrderId <= 0
+      ) {
+        return Response.json(
+          { message: "Invalid standee order reference." },
+          { status: 400 },
+        );
+      }
+
+      standeeOrder = await prisma.order.findFirst({
         where: {
-          providerPaymentId: paymentId,
-        },
-        update: {
-          status: "SUCCESS",
-          paidAt: remotePayment.created_at
-            ? new Date(remotePayment.created_at * 1000)
-            : new Date(),
-        },
-        create: {
+          id: standeeOrderId,
           businessId: localSubscription.businessId,
-          subscriptionId: localSubscription.id,
-          provider: "RAZORPAY",
-          providerPaymentId: paymentId,
-          amount: remotePayment.amount / 100,
-          currency: remotePayment.currency || "INR",
-          status: "SUCCESS",
-          paidAt: remotePayment.created_at
-            ? new Date(remotePayment.created_at * 1000)
-            : new Date(),
         },
+      });
+
+      if (!standeeOrder) {
+        return Response.json(
+          { message: "Standee order not found." },
+          { status: 404 },
+        );
+      }
+
+      const standeeAmountPaise = Math.round(
+        Number(standeeOrder.totalAmount) * 100,
+      );
+
+      const expectedCombinedAmount =
+        subscriptionAmountPaise + standeeAmountPaise;
+
+      isCombinedInitialPayment =
+        standeeAmountPaise === 49900 &&
+        remotePayment.amount === expectedCombinedAmount;
+
+      if (!isCombinedInitialPayment) {
+        return Response.json(
+          {
+            message:
+              "The payment does not match the expected subscription and standee total.",
+          },
+          { status: 400 },
+        );
+      }
+    } else if (remotePayment.amount !== subscriptionAmountPaise) {
+      return Response.json(
+        {
+          message: "The payment does not match the subscription amount.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // 8. Do not associate an existing Razorpay payment with
+    // a different business or subscription.
+    const existingPayment = await prisma.payment.findUnique({
+      where: { providerPaymentId: paymentId },
+    });
+
+    if (
+      existingPayment &&
+      (
+        existingPayment.businessId !== localSubscription.businessId ||
+        existingPayment.subscriptionId !== localSubscription.id
+      )
+    ) {
+      console.error("Payment association mismatch:", paymentId);
+
+      return Response.json(
+        { message: "This payment is already associated with another record." },
+        { status: 409 },
+      );
+    }
+
+    // 9. Record captured payments transactionally.
+    if (remotePayment.status === "captured") {
+      const paidAt = remotePayment.created_at
+        ? new Date(remotePayment.created_at * 1000)
+        : new Date();
+
+      await prisma.$transaction(async (tx) => {
+        const payment = await tx.payment.upsert({
+          where: { providerPaymentId: paymentId },
+
+          update: {
+            amount: remotePayment.amount / 100,
+            currency: remotePayment.currency,
+            status: "SUCCESS",
+            paidAt,
+            ...(standeeOrder ? { orderId: standeeOrder.id } : {}),
+          },
+
+          create: {
+            businessId: localSubscription.businessId,
+            subscriptionId: localSubscription.id,
+            ...(standeeOrder ? { orderId: standeeOrder.id } : {}),
+            provider: "RAZORPAY",
+            providerPaymentId: paymentId,
+            amount: remotePayment.amount / 100,
+            currency: remotePayment.currency,
+            status: "SUCCESS",
+            paidAt,
+          },
+        });
+
+        // Protect an already-associated payment from unexpected changes.
+        if (
+          payment.businessId !== localSubscription.businessId ||
+          payment.subscriptionId !== localSubscription.id
+        ) {
+          throw new Error("Payment association mismatch.");
+        }
+
+        // Mark the standee paid only after a captured combined payment.
+        if (standeeOrder && isCombinedInitialPayment) {
+          const currentOrder = await tx.order.findUnique({
+            where: { id: standeeOrder.id },
+          });
+
+          if (currentOrder?.status === "PENDING_PAYMENT") {
+            await tx.order.update({
+              where: { id: standeeOrder.id },
+              data: {
+                status: "PAID",
+                fulfilmentStatus: "PENDING",
+              },
+            });
+          }
+        }
       });
     }
 
-    // 9. Update the local subscription status.
-    if (remoteSubscription.status === "active") {
+    // 10. Update subscription status from Razorpay's current state.
+    const statusMap = {
+      active: "ACTIVE",
+      authenticated: "AUTHENTICATED",
+      pending: "PENDING",
+      halted: "HALTED",
+      cancelled: "CANCELLED",
+      completed: "COMPLETED",
+      paused: "PAUSED",
+    };
+
+    const localStatus = statusMap[remoteSubscription.status];
+
+    if (localStatus) {
+      const updateData = { status: localStatus };
+
+      if (remoteSubscription.current_start) {
+        updateData.currentPeriodStart = new Date(
+          remoteSubscription.current_start * 1000,
+        );
+      }
+
+      if (remoteSubscription.current_end) {
+        updateData.currentPeriodEnd = new Date(
+          remoteSubscription.current_end * 1000,
+        );
+      }
+
+      if (remoteSubscription.charge_at) {
+        updateData.nextBillingAt = new Date(
+          remoteSubscription.charge_at * 1000,
+        );
+      }
+
       await prisma.subscription.update({
         where: { id: localSubscription.id },
-        data: { status: "ACTIVE" },
-      });
-    } else if (remoteSubscription.status === "authenticated") {
-      await prisma.subscription.update({
-        where: { id: localSubscription.id },
-        data: { status: "AUTHENTICATED" },
-      });
-    } else {
-      return Response.json({
-        verified: true,
-        status: remoteSubscription.status,
-        active: false,
-        message:
-          "Checkout was verified, but the subscription is not active yet.",
+        data: updateData,
       });
     }
 
@@ -162,10 +316,14 @@ export async function POST(request) {
       verified: true,
       status: remoteSubscription.status,
       active: remoteSubscription.status === "active",
+      standeePaid:
+        Boolean(standeeOrder) &&
+        isCombinedInitialPayment &&
+        remotePayment.status === "captured",
       message:
         remoteSubscription.status === "active"
-          ? "Subscription is active."
-          : "Subscription authorization is complete, but activation is pending.",
+          ? "Subscription verified successfully."
+          : "Payment verified; subscription activation may still be pending.",
     });
   } catch (error) {
     console.error("Subscription verification error:", error);
