@@ -1,258 +1,549 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./review.module.css";
 
+/*
+ * TEMPORARY DEMO DATA
+ *
+ * Later, retrieve the business-specific Google review URL
+ * from your backend using qrIdentifier.
+ */
 const DEMO_BUSINESS = {
-  name: "ABC Restaurant",
   googleReviewUrl: "https://www.google.com/maps",
 };
 
+const MAX_EXPERIENCE_LENGTH = 500;
+const MAX_REVIEW_LENGTH = 1000;
+
 /*
- * TEMPORARY LLM SIMULATION
+ * TEMPORARY REVIEW GENERATOR
  *
- * This is only here so the frontend can be tested.
+ * This is only for testing the UI.
  *
- * In production, this function will be replaced by an API call:
+ * Later, replace this function with a request to your
+ * review-generation API, which will call GroqCloud.
  *
- * Customer selects rating
- *        ↓
- * Backend
- *        ↓
- * LLM
- *        ↓
- * 4 review suggestions
+ * Input:
+ *   experience
+ *   rating
  *
- * We are intentionally not putting real review content here.
+ * Expected output:
+ *   Four review suggestions
  */
-function generateDemoReviews(rating) {
-  return [
-    `LLM generated review ${rating}★ — Option 1`,
-    `LLM generated review ${rating}★ — Option 2`,
-    `LLM generated review ${rating}★ — Option 3`,
-    `LLM generated review ${rating}★ — Option 4`,
-  ];
+function generateDemoReviews(experience, rating) {
+  const detail = experience.trim();
+
+  const detailSentence = detail ? ` ${detail}` : "";
+
+  const reviewsByRating = {
+    1: [
+      `My experience was disappointing.${detailSentence}`,
+      `I was not satisfied with my experience.${detailSentence}`,
+      `There is room for improvement based on my experience.${detailSentence}`,
+      `Overall, my experience did not meet my expectations.${detailSentence}`,
+    ],
+
+    2: [
+      `My experience could have been better.${detailSentence}`,
+      `I had a few concerns about my experience.${detailSentence}`,
+      `Some parts of my experience were below expectations.${detailSentence}`,
+      `I hope the experience improves in the future.${detailSentence}`,
+    ],
+
+    3: [
+      `My experience was okay overall.${detailSentence}`,
+      `My experience had both positives and areas to improve.${detailSentence}`,
+      `Overall, the experience was average for me.${detailSentence}`,
+      `There is some room to make the experience better.${detailSentence}`,
+    ],
+
+    4: [
+      `I had a good experience overall.${detailSentence}`,
+      `Overall, I was pleased with my experience.${detailSentence}`,
+      `My experience was positive, with a little room for improvement.${detailSentence}`,
+      `I had a satisfying experience overall.${detailSentence}`,
+    ],
+
+    5: [
+      `I had a great experience.${detailSentence}`,
+      `I was very happy with my experience.${detailSentence}`,
+      `Overall, my experience was excellent.${detailSentence}`,
+      `I had a very positive experience overall.${detailSentence}`,
+    ],
+  };
+
+  return reviewsByRating[rating] || [];
 }
 
 export default function ReviewPage({ qrIdentifier }) {
+  // Customer's original experience.
+  const [experience, setExperience] = useState("");
+
+  // Selected star rating.
   const [rating, setRating] = useState(0);
 
-  // Reviews returned by the LLM.
+  // Four generated review suggestions.
   const [reviews, setReviews] = useState([]);
 
-  // The review currently inside the customer's textarea.
-  const [selectedReview, setSelectedReview] = useState("");
+  // Currently active carousel card.
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const [copied, setCopied] = useState(false);
+  // Loading state.
   const [generating, setGenerating] = useState(false);
+
+  // Toast notification.
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
+
+  const sliderRef = useRef(null);
+  const cardRefs = useRef([]);
+
+  const generationTimerRef = useRef(null);
+  const toastTimerRef = useRef(null);
+  const redirectTimerRef = useRef(null);
+
+  const generationIdRef = useRef(0);
 
   /*
-   * Temporary business data.
-   *
-   * Later:
-   *
-   * qrIdentifier
-   *      ↓
-   * backend
-   *      ↓
-   * database
-   *      ↓
-   * business.name
-   * business.googleReviewUrl
+   * Display a temporary notification.
    */
-  const business = DEMO_BUSINESS;
+  const showMessage = useCallback(
+    (text, type = "info", duration = 2400) => {
+      setMessage(text);
+      setMessageType(type);
+
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+
+      toastTimerRef.current = window.setTimeout(() => {
+        setMessage("");
+      }, duration);
+    },
+    []
+  );
 
   /*
-   * Generate review suggestions whenever
-   * the customer selects a rating.
-   *
-   * Currently simulated.
-   *
-   * Later this will become an API request
-   * to the backend/LLM.
+   * Clean up timers when the component unmounts.
    */
   useEffect(() => {
-    if (!rating) {
-      setReviews([]);
-      return;
-    }
+    return () => {
+      if (generationTimerRef.current) {
+        window.clearTimeout(generationTimerRef.current);
+      }
 
-    setGenerating(true);
-    setCopied(false);
-    setMessage("");
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
 
-    const timer = setTimeout(() => {
-      const generatedReviews = generateDemoReviews(rating);
-
-      setReviews(generatedReviews);
-      setGenerating(false);
-    }, 700);
-
-    return () => clearTimeout(timer);
-  }, [rating]);
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   /*
-   * Customer selects a rating.
+   * Generate suggestions when the customer selects a rating.
+   *
+   * Currently simulated.
+   * Later, this will call the backend API.
    */
   function handleRating(star) {
     setRating(star);
-    setCopied(false);
     setMessage("");
+    setGenerating(true);
+    setReviews([]);
+    setActiveIndex(0);
+
+    if (generationTimerRef.current) {
+      window.clearTimeout(generationTimerRef.current);
+    }
+
+    const generationId = ++generationIdRef.current;
+
+    generationTimerRef.current = window.setTimeout(() => {
+      // Ignore an outdated generation.
+      if (generationId !== generationIdRef.current) {
+        return;
+      }
+
+      const generatedReviews = generateDemoReviews(
+        experience,
+        star
+      );
+
+      setReviews(generatedReviews);
+      setGenerating(false);
+
+      requestAnimationFrame(() => {
+        if (sliderRef.current) {
+          sliderRef.current.scrollTo({
+            left: 0,
+            behavior: "smooth",
+          });
+        }
+      });
+    }, 450);
   }
 
   /*
-   * Customer selects one of the AI-generated
-   * suggestions.
-   *
-   * It is placed into the textarea.
-   *
-   * The customer can then:
-   * - edit it
-   * - delete it
-   * - replace it completely
+   * Update the customer's original experience.
    */
-  function handleReviewSelect(review) {
-    setSelectedReview(review);
-    setCopied(false);
-    setMessage("");
-
-    setTimeout(() => {
-      document
-        .getElementById("review-textarea")
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-    }, 50);
+  function handleExperienceChange(event) {
+    setExperience(event.target.value);
   }
 
   /*
-   * Customer writes or edits the review manually.
+   * Edit a review directly inside its carousel card.
    */
-  function handleReviewChange(event) {
-    setSelectedReview(event.target.value);
-    setCopied(false);
-    setMessage("");
+  function handleReviewChange(index, value) {
+    setReviews((currentReviews) =>
+      currentReviews.map((review, reviewIndex) =>
+        reviewIndex === index ? value : review
+      )
+    );
   }
 
   /*
-   * Clear the textarea.
+   * Find the card closest to the center of the screen.
+   *
+   * The active card is the review copied when the customer
+   * presses "Post on Google".
    */
-  function handleClearReview() {
-    setSelectedReview("");
-    setCopied(false);
-    setMessage("");
-  }
+  function updateActiveCard() {
+    const slider = sliderRef.current;
 
-  /*
-   * Perfect button.
-   *
-   * Copies whatever is currently in the textarea.
-   *
-   * It does not matter whether the content came from:
-   *
-   * 1. LLM
-   * 2. Edited LLM suggestion
-   * 3. Completely manual writing
-   */
-  async function handlePerfect() {
-    const reviewText = selectedReview.trim();
-
-    if (!reviewText) {
-      setMessage("Please write a review first.");
-      setCopied(false);
+    if (!slider || cardRefs.current.length === 0) {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(reviewText);
+    const sliderRect = slider.getBoundingClientRect();
 
-      setCopied(true);
-      setMessage("Your review has been copied.");
+    const sliderCenter =
+      sliderRect.left + sliderRect.width / 2;
 
-      setTimeout(() => {
-        setCopied(false);
-        setMessage("");
-      }, 3000);
-    } catch (error) {
-      console.error("Clipboard error:", error);
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
 
-      /*
-       * Keep the review in the textarea.
-       * Customer can manually copy it.
-       */
-      setCopied(false);
-      setMessage(
-        "Automatic copy failed. Please copy your review manually."
+    cardRefs.current.forEach((card, index) => {
+      if (!card) {
+        return;
+      }
+
+      const cardRect = card.getBoundingClientRect();
+
+      const cardCenter =
+        cardRect.left + cardRect.width / 2;
+
+      const distance = Math.abs(
+        sliderCenter - cardCenter
+      );
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    setActiveIndex((currentIndex) =>
+      currentIndex === closestIndex
+        ? currentIndex
+        : closestIndex
+    );
+  }
+
+  /*
+   * Center a particular review card.
+   */
+  function centerCard(index) {
+    const card = cardRefs.current[index];
+
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+
+    setActiveIndex(index);
+  }
+
+  /*
+   * Copy review text to the clipboard.
+   *
+   * Includes a fallback for browsers where the Clipboard API
+   * is unavailable.
+   */
+  async function copyReviewText(text) {
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const temporaryTextarea =
+      document.createElement("textarea");
+
+    temporaryTextarea.value = text;
+
+    temporaryTextarea.setAttribute(
+      "readonly",
+      ""
+    );
+
+    temporaryTextarea.style.position = "fixed";
+    temporaryTextarea.style.opacity = "0";
+    temporaryTextarea.style.pointerEvents = "none";
+
+    document.body.appendChild(temporaryTextarea);
+
+    temporaryTextarea.select();
+
+    temporaryTextarea.setSelectionRange(
+      0,
+      temporaryTextarea.value.length
+    );
+
+    const copied = document.execCommand("copy");
+
+    document.body.removeChild(temporaryTextarea);
+
+    if (!copied) {
+      throw new Error(
+        "Clipboard copy was not successful."
       );
     }
   }
 
   /*
-   * Open the business-specific Google review page.
+   * Get the Google review URL.
    *
-   * The customer performs the final posting action
-   * on Google.
+   * Currently a placeholder.
+   *
+   * Later, use the URL retrieved by your backend for
+   * the supplied qrIdentifier.
    */
-  function handleGoogleReview() {
-    window.open(
-      business.googleReviewUrl,
-      "_blank",
-      "noopener,noreferrer"
+  function getGoogleReviewUrl() {
+    const url = new URL(
+      DEMO_BUSINESS.googleReviewUrl
     );
+
+    if (
+      url.protocol !== "https:" &&
+      url.protocol !== "http:"
+    ) {
+      throw new Error(
+        "Invalid Google review URL."
+      );
+    }
+
+    return url.toString();
+  }
+
+  /*
+   * Main action:
+   *
+   * 1. Validate the selected review.
+   * 2. Open a temporary tab to reduce popup-blocker issues.
+   * 3. Copy the active review.
+   * 4. Show a confirmation message.
+   * 5. Redirect the new tab to Google.
+   */
+  async function handlePostOnGoogle() {
+    const reviewText = (
+      reviews[activeIndex] || ""
+    ).trim();
+
+    if (!rating) {
+      showMessage(
+        "Choose a star rating first.",
+        "info"
+      );
+
+      return;
+    }
+
+    if (generating) {
+      showMessage(
+        "Please wait for your review options.",
+        "info"
+      );
+
+      return;
+    }
+
+    if (!reviewText) {
+      showMessage(
+        "Write your review in the card before continuing.",
+        "info"
+      );
+
+      return;
+    }
+
+    let googleUrl;
+
+    try {
+      googleUrl = getGoogleReviewUrl();
+    } catch (error) {
+      console.error(
+        "Google review URL error:",
+        error
+      );
+
+      showMessage(
+        "The Google review link is unavailable right now.",
+        "error"
+      );
+
+      return;
+    }
+
+    /*
+     * Open synchronously inside the click handler.
+     * This helps avoid popup blockers.
+     */
+    let googleWindow = null;
+
+    try {
+      googleWindow = window.open(
+        "about:blank",
+        "_blank"
+      );
+
+      if (googleWindow) {
+        googleWindow.opener = null;
+      }
+    } catch {
+      googleWindow = null;
+    }
+
+    try {
+      // Copy the currently active, editable review.
+      await copyReviewText(reviewText);
+
+      showMessage(
+        "Your review has been copied to the clipboard.",
+        "success",
+        1800
+      );
+
+      /*
+       * Give the customer a brief opportunity to see
+       * the confirmation before navigating to Google.
+       */
+      redirectTimerRef.current =
+        window.setTimeout(() => {
+          if (
+            googleWindow &&
+            !googleWindow.closed
+          ) {
+            googleWindow.location.replace(
+              googleUrl
+            );
+          } else {
+            /*
+             * Fallback if a new tab was blocked.
+             */
+            window.location.assign(googleUrl);
+          }
+        }, 850);
+    } catch (error) {
+      console.error(
+        "Clipboard error:",
+        error
+      );
+
+      if (
+        googleWindow &&
+        !googleWindow.closed
+      ) {
+        googleWindow.close();
+      }
+
+      showMessage(
+        "Couldn't copy automatically. Please try again or copy the text manually.",
+        "error",
+        3500
+      );
+    }
   }
 
   return (
     <main className={styles.page}>
       <div className={styles.backgroundGlow} />
 
-      <section className={styles.reviewContainer}>
+      <div className={styles.reviewContainer}>
 
-        {/* =========================
-            BRAND
-        ========================== */}
+        {/* EXPERIENCE INPUT */}
 
-        <div className={styles.brand}>
-          <div className={styles.logoBox}>
-            <img
-              src="/shryxa-logo.png"
-              alt="Shryxa Review"
-            />
-          </div>
-
-          <span>Shryxa Review</span>
-        </div>
-
-        {/* =========================
-            BUSINESS
-        ========================== */}
-
-        <header className={styles.header}>
-          <span className={styles.smallLabel}>
-            CUSTOMER FEEDBACK
-          </span>
-
-          <h1>
-            How was your experience at{" "}
-            <span>{business.name}</span>?
-          </h1>
+        <header className={styles.intro}>
+          <h1>Write your experience</h1>
 
           <p>
-            Select a rating to get review suggestions,
-            or write your own review.
+            Get an AI-assisted review suggestion.
           </p>
         </header>
 
-        {/* =========================
-            STAR RATING
-        ========================== */}
+        <section
+          className={styles.experienceSection}
+          aria-labelledby="experience-heading"
+        >
+          <label
+            id="experience-heading"
+            className={styles.fieldHeading}
+            htmlFor="experience-input"
+          >
+            Write your experience
+          </label>
 
-        <section className={styles.ratingSection}>
+          <textarea
+            id="experience-input"
+            className={styles.experienceInput}
+            value={experience}
+            onChange={handleExperienceChange}
+            placeholder="What was your experience like?"
+            maxLength={MAX_EXPERIENCE_LENGTH}
+            rows={3}
+            autoCapitalize="sentences"
+            spellCheck="true"
+          />
+
+          <div className={styles.inputFooter}>
+            <span>
+              Your own words help shape the suggestion.
+            </span>
+
+            <span>
+              {experience.length}/
+              {MAX_EXPERIENCE_LENGTH}
+            </span>
+          </div>
+        </section>
+
+        {/* STAR RATING */}
+
+        <section
+          className={styles.ratingSection}
+          aria-labelledby="rating-heading"
+        >
+          <h2
+            id="rating-heading"
+            className={styles.fieldHeading}
+          >
+            Choose your rating
+          </h2>
+
           <div
             className={styles.stars}
             role="radiogroup"
-            aria-label="Select your rating"
+            aria-label="Choose a star rating"
           >
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -264,269 +555,243 @@ export default function ReviewPage({ qrIdentifier }) {
                     : ""
                 }`}
                 onClick={() => handleRating(star)}
-                aria-label={`${star} star${
-                  star > 1 ? "s" : ""
-                }`}
-                aria-checked={star === rating}
                 role="radio"
+                aria-checked={rating === star}
+                aria-label={`${star} ${
+                  star === 1 ? "star" : "stars"
+                }`}
               >
                 {star <= rating ? "★" : "☆"}
               </button>
             ))}
           </div>
 
-          <div className={styles.ratingText}>
-            {rating === 0 && (
-              <span>Rating is optional</span>
-            )}
+          <p
+            className={styles.ratingHint}
+            aria-live="polite"
+          >
+            {rating === 0 && "Tap a star to continue"}
 
-            {rating === 1 && (
-              <span>
-                We're sorry to hear that.
-              </span>
-            )}
-
-            {rating === 2 && (
-              <span>
-                We'd love to do better.
-              </span>
-            )}
-
-            {rating === 3 && (
-              <span>
-                Thanks for your feedback.
-              </span>
-            )}
-
-            {rating === 4 && (
-              <span>
-                Glad you had a good experience!
-              </span>
-            )}
-
-            {rating === 5 && (
-              <span>
-                Wonderful! Thank you! ❤️
-              </span>
-            )}
-          </div>
-        </section>
-
-        {/* =========================
-            GENERATING
-        ========================== */}
-
-        {generating && (
-          <section className={styles.loadingCard}>
-            <div className={styles.loader} />
-
-            <div className={styles.loadingContent}>
-              <strong>
-                Creating your review options
-              </strong>
-
-              <span>
-                Just a moment...
-              </span>
-            </div>
-          </section>
-        )}
-
-        {/* =========================
-            AI REVIEW OPTIONS
-        ========================== */}
-
-        {!generating && reviews.length > 0 && (
-          <section className={styles.optionsSection}>
-            <div className={styles.sectionHeading}>
-              <div>
-                <span className={styles.smallLabel}>
-                  REVIEW OPTIONS
-                </span>
-
-                <h2>
-                  Choose the one you like
-                </h2>
-              </div>
-
-              <span className={styles.optionCount}>
-                {reviews.length} options
-              </span>
-            </div>
-
-            <p className={styles.suggestionHint}>
-              These suggestions are optional. You can
-              choose one, edit it, or write your own review.
-            </p>
-
-            <div className={styles.reviewOptions}>
-              {reviews.map((review, index) => (
-                <button
-                  type="button"
-                  key={index}
-                  className={`${styles.reviewOption} ${
-                    selectedReview === review
-                      ? styles.reviewOptionSelected
-                      : ""
-                  }`}
-                  onClick={() =>
-                    handleReviewSelect(review)
-                  }
-                >
-                  <span className={styles.optionNumber}>
-                    {index + 1}
-                  </span>
-
-                  <span className={styles.optionText}>
-                    {review}
-                  </span>
-
-                  <span className={styles.optionArrow}>
-                    →
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* =========================
-            REVIEW EDITOR
-            ALWAYS VISIBLE
-        ========================== */}
-
-        <section className={styles.editorSection}>
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.smallLabel}>
-                YOUR REVIEW
-              </span>
-
-              <h2>
-                Write it your way
-              </h2>
-            </div>
-          </div>
-
-          <p className={styles.editorHint}>
-            Use an AI suggestion above, edit it, or write
-            your own review from scratch.
+            {rating === 1 && "1 star"}
+            {rating === 2 && "2 stars"}
+            {rating === 3 && "3 stars"}
+            {rating === 4 && "4 stars"}
+            {rating === 5 && "5 stars"}
           </p>
-
-          <div className={styles.editorCard}>
-            <textarea
-              id="review-textarea"
-              value={selectedReview}
-              onChange={handleReviewChange}
-              placeholder="Write your review here..."
-              aria-label="Write your review"
-              rows={7}
-              maxLength={1000}
-            />
-
-            <div className={styles.editorFooter}>
-              <span>
-                {selectedReview.length} / 1000 characters
-              </span>
-
-              {selectedReview && (
-                <button
-                  type="button"
-                  className={styles.clearButton}
-                  onClick={handleClearReview}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* =========================
-                PERFECT
-                ALWAYS VISIBLE
-            ========================== */}
-
-            <button
-              type="button"
-              className={styles.perfectButton}
-              onClick={handlePerfect}
-            >
-              <span>Perfect</span>
-              <span>✓</span>
-            </button>
-
-            {message && (
-              <div
-                className={
-                  copied
-                    ? styles.successMessage
-                    : styles.infoMessage
-                }
-              >
-                <span>
-                  {copied ? "✓" : "ⓘ"}
-                </span>
-
-                <span>
-                  {message}
-                </span>
-              </div>
-            )}
-          </div>
         </section>
 
-        {/* =========================
-            GOOGLE
-            ALWAYS VISIBLE
-        ========================== */}
+        {/* REVIEW SUGGESTIONS */}
 
-        <section className={styles.googleSection}>
-          <div className={styles.googleIcon}>
-            G
-          </div>
-
-          <div className={styles.googleContent}>
-            <span className={styles.smallLabel}>
-              GOOGLE REVIEWS
-            </span>
-
-            <h2>
-              Ready to share your review?
+        <section
+          className={styles.optionsSection}
+          aria-labelledby="options-heading"
+        >
+          <div className={styles.optionsHeader}>
+            <h2
+              id="options-heading"
+              className={styles.fieldHeading}
+            >
+              Review suggestions
             </h2>
 
-            <p>
-              Continue to Google to complete your review.
-              You can make any final changes there before
-              posting.
-            </p>
+            {reviews.length > 0 && (
+              <span className={styles.optionCount}>
+                {activeIndex + 1} of {reviews.length}
+              </span>
+            )}
           </div>
 
-          {/* =========================
-              POST ON GOOGLE
-              ALWAYS VISIBLE
-          ========================== */}
+          {!rating && (
+            <div className={styles.emptyState}>
+              Your suggestions will appear here
+              after you choose a rating.
+            </div>
+          )}
 
-          <button
-            type="button"
-            className={styles.googleButton}
-            onClick={handleGoogleReview}
-          >
-            <span>Post on Google</span>
-            <span>↗</span>
-          </button>
+          {generating && (
+            <div
+              className={styles.loadingCard}
+              role="status"
+              aria-live="polite"
+            >
+              <span
+                className={styles.loader}
+                aria-hidden="true"
+              />
+
+              <span>
+                Preparing your suggestions…
+              </span>
+            </div>
+          )}
+
+          {!generating && reviews.length > 0 && (
+            <>
+              <div
+                className={styles.reviewSlider}
+                ref={sliderRef}
+                onScroll={updateActiveCard}
+                aria-label="Swipe horizontally to browse and edit review suggestions"
+              >
+                {reviews.map((review, index) => (
+                  <article
+                    key={`${rating}-${index}`}
+                    ref={(element) => {
+                      cardRefs.current[index] =
+                        element;
+                    }}
+                    className={`${
+                      styles.reviewCard
+                    } ${
+                      activeIndex === index
+                        ? styles.reviewCardActive
+                        : ""
+                    }`}
+                    onClick={() =>
+                      centerCard(index)
+                    }
+                  >
+                    <div
+                      className={styles.cardTopline}
+                    >
+                      <span
+                        className={styles.cardNumber}
+                      >
+                        OPTION {index + 1}
+                      </span>
+
+                      {activeIndex === index && (
+                        <span
+                          className={styles.editLabel}
+                        >
+                          EDIT YOUR REVIEW
+                        </span>
+                      )}
+                    </div>
+
+                    <textarea
+                      className={
+                        styles.reviewTextarea
+                      }
+                      value={review}
+                      onChange={(event) =>
+                        handleReviewChange(
+                          index,
+                          event.target.value
+                        )
+                      }
+                      onFocus={() =>
+                        setActiveIndex(index)
+                      }
+                      onClick={(event) =>
+                        event.stopPropagation()
+                      }
+                      aria-label={`Edit review option ${
+                        index + 1
+                      }`}
+                      maxLength={MAX_REVIEW_LENGTH}
+                      rows={7}
+                      spellCheck="true"
+                    />
+
+                    <div
+                      className={styles.cardFooter}
+                    >
+                      <span>
+                        {review.length}/
+                        {MAX_REVIEW_LENGTH}
+                      </span>
+
+                      <button
+                        type="button"
+                        className={
+                          styles.centerButton
+                        }
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          centerCard(index);
+                        }}
+                        aria-label={`Center review option ${
+                          index + 1
+                        }`}
+                      >
+                        {activeIndex === index
+                          ? "Selected ✓"
+                          : "Use this"}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div
+                className={styles.sliderHint}
+                aria-hidden="true"
+              >
+                <span>‹</span>
+                <span>Swipe to explore</span>
+                <span>›</span>
+              </div>
+
+              <div
+                className={styles.sliderDots}
+                aria-label="Choose a review option"
+              >
+                {reviews.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`${
+                      styles.sliderDot
+                    } ${
+                      activeIndex === index
+                        ? styles.sliderDotActive
+                        : ""
+                    }`}
+                    onClick={() =>
+                      centerCard(index)
+                    }
+                    aria-label={`Show review option ${
+                      index + 1
+                    }`}
+                    aria-current={
+                      activeIndex === index
+                        ? "true"
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </section>
 
-        {/* =========================
-            FOOTER
-        ========================== */}
+        {/* POST ON GOOGLE */}
+
+        <button
+          type="button"
+          className={styles.googleButton}
+          onClick={handlePostOnGoogle}
+          disabled={
+            generating || reviews.length === 0
+          }
+        >
+          <span>Post on Google</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+
+        {/* FOOTER */}
 
         <footer className={styles.footer}>
-          <span>Powered by</span>
+          <span>
+            Powered by{" "}
+            <strong>Shryxa Review</strong>
+          </span>
 
-          <strong>
-            Shryxa Review
-          </strong>
-
-          <span className={styles.dot}>
+          <span
+            className={styles.footerDot}
+            aria-hidden="true"
+          >
             •
           </span>
 
@@ -534,8 +799,43 @@ export default function ReviewPage({ qrIdentifier }) {
             Thank you for your feedback ❤️
           </span>
         </footer>
+      </div>
 
-      </section>
+      {/* TOAST NOTIFICATION */}
+
+      {message && (
+        <div
+          className={`${
+            styles.toast
+          } ${
+            messageType === "success"
+              ? styles.toastSuccess
+              : messageType === "error"
+                ? styles.toastError
+                : ""
+          }`}
+          role={
+            messageType === "error"
+              ? "alert"
+              : "status"
+          }
+          aria-live={
+            messageType === "error"
+              ? "assertive"
+              : "polite"
+          }
+        >
+          <span aria-hidden="true">
+            {messageType === "success"
+              ? "✓"
+              : messageType === "error"
+                ? "!"
+                : "ⓘ"}
+          </span>
+
+          <span>{message}</span>
+        </div>
+      )}
     </main>
   );
 }
