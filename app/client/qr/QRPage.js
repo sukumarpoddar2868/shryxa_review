@@ -11,6 +11,8 @@ export default function QRPage() {
   const [qrCode, setQrCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingFormat, setDownloadingFormat] = useState(null);
+
 
   const menuItems = [
     { label: "Dashboard", href: "/client/dashboard", icon: "⌂" },
@@ -70,9 +72,7 @@ export default function QRPage() {
         const qrData = await qrResponse.json();
 
         if (!qrResponse.ok) {
-          throw new Error(
-            qrData.error || "Unable to load your QR code.",
-          );
+          throw new Error(qrData.error || "Unable to load your QR code.");
         }
 
         if (!cancelled) {
@@ -108,6 +108,68 @@ export default function QRPage() {
     link.click();
     link.remove();
   }
+  async function downloadStandeePDF(format) {
+    if (!business?.id) {
+      setError("Business information is missing. Please try again.");
+      return;
+    }
+
+    setDownloadingFormat(format);
+    setError("");
+
+    try {
+      const response = await fetch("/api/qr/standee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessId: business.id,
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        let message = "Unable to download the standee template.";
+
+        try {
+          const data = await response.json();
+          message = data.error || message;
+        } catch {
+          // Use the default error message.
+        }
+
+        throw new Error(message);
+      }
+
+      const pdfBlob = await response.blob();
+
+      if (!pdfBlob.size) {
+        throw new Error("The generated PDF is empty.");
+      }
+
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download =
+        format === "4x6"
+          ? "shryxa-review-standee-4x6-inch.pdf"
+          : "shryxa-review-standee-12x12-cm.pdf";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      // Allow the browser to start the download before releasing the URL.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error("Standee download error:", err);
+      setError(err.message || "Unable to download the standee template.");
+    } finally {
+      setDownloadingFormat(null);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -132,9 +194,7 @@ export default function QRPage() {
 
       {/* Sidebar */}
       <aside
-        className={`${styles.sidebar} ${
-          mobileMenu ? styles.sidebarOpen : ""
-        }`}
+        className={`${styles.sidebar} ${mobileMenu ? styles.sidebarOpen : ""}`}
       >
         <Link href="/" className={styles.brand}>
           <span className={styles.logoBox}>
@@ -236,8 +296,8 @@ export default function QRPage() {
                 <h2>Let customers scan and review</h2>
 
                 <p className={styles.description}>
-                  Customers can scan this QR code to open your Shryxa
-                  review experience.
+                  Customers can scan this QR code to open your Shryxa review
+                  experience.
                 </p>
 
                 <div className={styles.infoItem}>
@@ -247,18 +307,41 @@ export default function QRPage() {
 
                 <div className={styles.infoItem}>
                   <span>Destination</span>
-                  <div className={styles.urlBox}>
-                    {qrCode.destinationUrl}
-                  </div>
+                  <div className={styles.urlBox}>{qrCode.destinationUrl}</div>
                 </div>
 
                 <div className={styles.actions}>
+                  {/* Download the QR image */}
                   <button
                     type="button"
                     className={styles.downloadButton}
                     onClick={handleDownload}
                   >
                     Download QR <span>↓</span>
+                  </button>
+
+                  {/* Download portrait standee PDF */}
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => downloadStandeePDF("4x6")}
+                    disabled={downloadingFormat !== null}
+                  >
+                    {downloadingFormat === "4x6"
+                      ? "Generating Portrait PDF..."
+                      : "Download Portrait Standee"}
+                  </button>
+
+                  {/* Download square standee PDF */}
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => downloadStandeePDF("12x12cm")}
+                    disabled={downloadingFormat !== null}
+                  >
+                    {downloadingFormat === "12x12cm"
+                      ? "Generating Square PDF..."
+                      : "Download Square Standee"}
                   </button>
                 </div>
               </div>
