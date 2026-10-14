@@ -3,111 +3,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./review.module.css";
 
-/*
- * TEMPORARY DEMO DATA
- *
- * Later, retrieve the business-specific Google review URL
- * from your backend using qrIdentifier.
- */
-const DEMO_BUSINESS = {
-  googleReviewUrl: "https://www.google.com/maps",
-};
-
 const MAX_EXPERIENCE_LENGTH = 500;
 const MAX_REVIEW_LENGTH = 1000;
 
-/*
- * TEMPORARY REVIEW GENERATOR
- *
- * This is only for testing the UI.
- *
- * Later, replace this function with a request to your
- * review-generation API, which will call GroqCloud.
- *
- * Input:
- *   experience
- *   rating
- *
- * Expected output:
- *   Four review suggestions
- */
-function generateDemoReviews(experience, rating) {
-  const detail = experience.trim();
-
-  const detailSentence = detail ? ` ${detail}` : "";
-
-  const reviewsByRating = {
-    1: [
-      `My experience was disappointing.${detailSentence}`,
-      `I was not satisfied with my experience.${detailSentence}`,
-      `There is room for improvement based on my experience.${detailSentence}`,
-      `Overall, my experience did not meet my expectations.${detailSentence}`,
-    ],
-
-    2: [
-      `My experience could have been better.${detailSentence}`,
-      `I had a few concerns about my experience.${detailSentence}`,
-      `Some parts of my experience were below expectations.${detailSentence}`,
-      `I hope the experience improves in the future.${detailSentence}`,
-    ],
-
-    3: [
-      `My experience was okay overall.${detailSentence}`,
-      `My experience had both positives and areas to improve.${detailSentence}`,
-      `Overall, the experience was average for me.${detailSentence}`,
-      `There is some room to make the experience better.${detailSentence}`,
-    ],
-
-    4: [
-      `I had a good experience overall.${detailSentence}`,
-      `Overall, I was pleased with my experience.${detailSentence}`,
-      `My experience was positive, with a little room for improvement.${detailSentence}`,
-      `I had a satisfying experience overall.${detailSentence}`,
-    ],
-
-    5: [
-      `I had a great experience.${detailSentence}`,
-      `I was very happy with my experience.${detailSentence}`,
-      `Overall, my experience was excellent.${detailSentence}`,
-      `I had a very positive experience overall.${detailSentence}`,
-    ],
-  };
-
-  return reviewsByRating[rating] || [];
-}
-
-export default function ReviewPage({ qrIdentifier }) {
-  // Customer's original experience.
+export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
   const [experience, setExperience] = useState("");
-
-  // Selected star rating.
   const [rating, setRating] = useState(0);
-
-  // Four generated review suggestions.
   const [reviews, setReviews] = useState([]);
-
-  // Currently active carousel card.
   const [activeIndex, setActiveIndex] = useState(0);
-
-  // Loading state.
   const [generating, setGenerating] = useState(false);
-
-  // Toast notification.
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
 
   const sliderRef = useRef(null);
   const cardRefs = useRef([]);
-
-  const generationTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const redirectTimerRef = useRef(null);
-
   const generationIdRef = useRef(0);
 
-  /*
-   * Display a temporary notification.
-   */
+  // Display a notification.
   const showMessage = useCallback(
     (text, type = "info", duration = 2400) => {
       setMessage(text);
@@ -124,14 +38,10 @@ export default function ReviewPage({ qrIdentifier }) {
     []
   );
 
-  /*
-   * Clean up timers when the component unmounts.
-   */
+  // Clean up timers and invalidate pending requests on unmount.
   useEffect(() => {
     return () => {
-      if (generationTimerRef.current) {
-        window.clearTimeout(generationTimerRef.current);
-      }
+      generationIdRef.current++;
 
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
@@ -143,38 +53,81 @@ export default function ReviewPage({ qrIdentifier }) {
     };
   }, []);
 
-  /*
-   * Generate suggestions when the customer selects a rating.
-   *
-   * Currently simulated.
-   * Later, this will call the backend API.
-   */
-  function handleRating(star) {
+  // Generate four reviews through the backend API.
+  async function handleRating(star) {
     setRating(star);
     setMessage("");
-    setGenerating(true);
     setReviews([]);
     setActiveIndex(0);
 
-    if (generationTimerRef.current) {
-      window.clearTimeout(generationTimerRef.current);
+    // Require the customer's experience before generating reviews.
+    if (!experience.trim()) {
+      setGenerating(false);
+      generationIdRef.current++;
+
+      showMessage(
+        "Write your experience first, then choose a rating.",
+        "info"
+      );
+
+      return;
     }
 
     const generationId = ++generationIdRef.current;
 
-    generationTimerRef.current = window.setTimeout(() => {
-      // Ignore an outdated generation.
+    setGenerating(true);
+
+    try {
+      const response = await fetch("/api/review/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          qrIdentifier,
+          experience: experience.trim(),
+          rating: star,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      // Ignore an outdated response if the customer selected another rating.
       if (generationId !== generationIdRef.current) {
         return;
       }
 
-      const generatedReviews = generateDemoReviews(
-        experience,
-        star
-      );
+      if (!response.ok) {
+        if (data.code === "SUBSCRIPTION_INACTIVE") {
+          showMessage(
+            "AI review generation is unavailable because this business's subscription is inactive.",
+            "error",
+            4500
+          );
+        } else {
+          showMessage(
+            data.error || "Could not generate reviews. Please try again.",
+            "error",
+            4000
+          );
+        }
 
-      setReviews(generatedReviews);
-      setGenerating(false);
+        return;
+      }
+
+      // Validate the response before displaying the suggestions.
+      if (
+        !Array.isArray(data.reviews) ||
+        data.reviews.length !== 4 ||
+        !data.reviews.every(
+          (review) =>
+            typeof review === "string" && review.trim().length > 0
+        )
+      ) {
+        throw new Error("The review API returned an invalid response.");
+      }
+
+      setReviews(data.reviews.map((review) => review.trim()));
 
       requestAnimationFrame(() => {
         if (sliderRef.current) {
@@ -184,19 +137,29 @@ export default function ReviewPage({ qrIdentifier }) {
           });
         }
       });
-    }, 450);
+    } catch (error) {
+      console.error("Review generation failed:", error);
+
+      if (generationId === generationIdRef.current) {
+        showMessage(
+          "Review generation failed. Check your connection and try again.",
+          "error",
+          4000
+        );
+      }
+    } finally {
+      if (generationId === generationIdRef.current) {
+        setGenerating(false);
+      }
+    }
   }
 
-  /*
-   * Update the customer's original experience.
-   */
+  // Update the customer's original experience.
   function handleExperienceChange(event) {
     setExperience(event.target.value);
   }
 
-  /*
-   * Edit a review directly inside its carousel card.
-   */
+  // Allow the customer to edit each review.
   function handleReviewChange(index, value) {
     setReviews((currentReviews) =>
       currentReviews.map((review, reviewIndex) =>
@@ -205,12 +168,7 @@ export default function ReviewPage({ qrIdentifier }) {
     );
   }
 
-  /*
-   * Find the card closest to the center of the screen.
-   *
-   * The active card is the review copied when the customer
-   * presses "Post on Google".
-   */
+  // Identify the review card closest to the slider's center.
   function updateActiveCard() {
     const slider = sliderRef.current;
 
@@ -219,9 +177,7 @@ export default function ReviewPage({ qrIdentifier }) {
     }
 
     const sliderRect = slider.getBoundingClientRect();
-
-    const sliderCenter =
-      sliderRect.left + sliderRect.width / 2;
+    const sliderCenter = sliderRect.left + sliderRect.width / 2;
 
     let closestIndex = 0;
     let closestDistance = Number.POSITIVE_INFINITY;
@@ -232,13 +188,8 @@ export default function ReviewPage({ qrIdentifier }) {
       }
 
       const cardRect = card.getBoundingClientRect();
-
-      const cardCenter =
-        cardRect.left + cardRect.width / 2;
-
-      const distance = Math.abs(
-        sliderCenter - cardCenter
-      );
+      const cardCenter = cardRect.left + cardRect.width / 2;
+      const distance = Math.abs(sliderCenter - cardCenter);
 
       if (distance < closestDistance) {
         closestDistance = distance;
@@ -246,16 +197,10 @@ export default function ReviewPage({ qrIdentifier }) {
       }
     });
 
-    setActiveIndex((currentIndex) =>
-      currentIndex === closestIndex
-        ? currentIndex
-        : closestIndex
-    );
+    setActiveIndex(closestIndex);
   }
 
-  /*
-   * Center a particular review card.
-   */
+  // Center a selected review card.
   function centerCard(index) {
     const card = cardRefs.current[index];
 
@@ -272,195 +217,175 @@ export default function ReviewPage({ qrIdentifier }) {
     setActiveIndex(index);
   }
 
-  /*
-   * Copy review text to the clipboard.
-   *
-   * Includes a fallback for browsers where the Clipboard API
-   * is unavailable.
-   */
+  // Copy review text to the clipboard.
   async function copyReviewText(text) {
-  const reviewText = text?.trim();
+    const reviewText = text?.trim();
 
-  if (!reviewText) {
-    throw new Error("Review text is empty.");
-  }
-
-  // Modern clipboard API: preferred on Android Chrome and iOS browsers.
-  if (
-    typeof navigator !== "undefined" &&
-    navigator.clipboard &&
-    window.isSecureContext
-  ) {
-    try {
-      await navigator.clipboard.writeText(reviewText);
-      return true;
-    } catch (error) {
-      console.error("Clipboard API failed:", error);
+    if (!reviewText) {
+      throw new Error("Review text is empty.");
     }
-  }
 
-  // Fallback for browsers that do not support clipboard.writeText().
-  const textarea = document.createElement("textarea");
-
-  textarea.value = reviewText;
-  textarea.setAttribute("readonly", "");
-
-  Object.assign(textarea.style, {
-    position: "fixed",
-    top: "0",
-    left: "0",
-    width: "2px",
-    height: "2px",
-    padding: "0",
-    border: "none",
-    opacity: "0.01",
-    fontSize: "16px",
-    zIndex: "-1",
-  });
-
-  document.body.appendChild(textarea);
-
-  let copied = false;
-
-  try {
-    textarea.focus();
-    textarea.select();
-    textarea.setSelectionRange(0, reviewText.length);
-
-    copied = document.execCommand("copy");
-  } catch (error) {
-    console.error("Fallback clipboard copy failed:", error);
-  } finally {
-    textarea.remove();
-  }
-
-  if (!copied) {
-    throw new Error("Unable to copy review text.");
-  }
-
-  return true;
-}
-  /*
-   * Get the Google review URL.
-   *
-   * Currently a placeholder.
-   *
-   * Later, use the URL retrieved by your backend for
-   * the supplied qrIdentifier.
-   */
-  function getGoogleReviewUrl() {
-    const url = new URL(
-      DEMO_BUSINESS.googleReviewUrl
-    );
-
+    // Prefer the modern Clipboard API.
     if (
-      url.protocol !== "https:" &&
-      url.protocol !== "http:"
+      typeof navigator !== "undefined" &&
+      navigator.clipboard &&
+      window.isSecureContext
     ) {
-      throw new Error(
-        "Invalid Google review URL."
-      );
+      try {
+        await navigator.clipboard.writeText(reviewText);
+        return true;
+      } catch (error) {
+        console.error("Clipboard API failed:", error);
+      }
+    }
+
+    // Fallback for browsers where the Clipboard API is unavailable.
+    const textarea = document.createElement("textarea");
+
+    textarea.value = reviewText;
+    textarea.setAttribute("readonly", "");
+
+    Object.assign(textarea.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "2px",
+      height: "2px",
+      padding: "0",
+      border: "none",
+      opacity: "0.01",
+      fontSize: "16px",
+      zIndex: "-1",
+    });
+
+    document.body.appendChild(textarea);
+
+    let copied = false;
+
+    try {
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, reviewText.length);
+
+      copied = document.execCommand("copy");
+    } catch (error) {
+      console.error("Fallback clipboard copy failed:", error);
+    } finally {
+      textarea.remove();
+    }
+
+    if (!copied) {
+      throw new Error("Unable to copy review text.");
+    }
+
+    return true;
+  }
+
+  // Retrieve and validate the Google Review URL passed by page.js.
+  function getGoogleReviewUrl() {
+    if (!googleReviewUrl) {
+      throw new Error("Google Review URL is unavailable.");
+    }
+
+    const url = new URL(googleReviewUrl);
+
+    if (url.protocol !== "https:") {
+      throw new Error("Invalid Google Review URL.");
     }
 
     return url.toString();
   }
 
-  /*
-   * Main action:
-   *
-   * 1. Validate the selected review.
-   * 2. Open a temporary tab to reduce popup-blocker issues.
-   * 3. Copy the active review.
-   * 4. Show a confirmation message.
-   * 5. Redirect the new tab to Google.
-   */
+  // Copy the selected review and navigate to Google.
   async function handlePostOnGoogle() {
     const reviewText = (reviews[activeIndex] || "").trim();
 
-    // Validate the selected rating.
     if (!rating) {
       showMessage("Choose a star rating first.", "info");
       return;
     }
 
-    // Prevent actions while suggestions are generating.
     if (generating) {
       showMessage("Please wait for your review options.", "info");
       return;
     }
 
-    // Validate the active review.
     if (!reviewText) {
-      showMessage("Write your review in the card before continuing.", "info");
+      showMessage(
+        "Write your review in the card before continuing.",
+        "info"
+      );
       return;
     }
 
-    // Get the Google Maps URL.
     let googleUrl;
 
     try {
       googleUrl = getGoogleReviewUrl();
     } catch (error) {
-      console.error("Google URL error:", error);
+      console.error("Google Review URL error:", error);
 
-      showMessage("The Google review link is unavailable right now.", "error");
+      showMessage(
+        "The Google Review link is unavailable right now.",
+        "error"
+      );
 
       return;
     }
 
-    /*
-     * IMPORTANT:
-     * Start the clipboard operation directly from the click handler.
-     * Do not open about:blank before attempting to copy.
-     */
-    let copyPromise;
+    // Open a tab during the click to reduce popup-blocker issues.
+    let googleWindow = null;
 
     try {
-      copyPromise = copyReviewText(reviewText);
-    } catch (error) {
-      console.error("Could not start clipboard operation:", error);
-      copyPromise = Promise.reject(error);
+      googleWindow = window.open("about:blank", "_blank");
+
+      if (googleWindow) {
+        googleWindow.opener = null;
+      }
+    } catch {
+      googleWindow = null;
     }
 
     try {
-      await copyPromise;
+      await copyReviewText(reviewText);
 
-      showMessage("Review copied! Paste it on Google.", "success", 2500);
+      showMessage(
+        "Review copied! Paste it on Google.",
+        "success",
+        2500
+      );
 
-      /*
-       * Navigate only after the copy operation succeeds.
-       * This prevents a failed copy from being mistaken for success.
-       */
-      window.location.assign(googleUrl);
+      redirectTimerRef.current = window.setTimeout(() => {
+        if (googleWindow && !googleWindow.closed) {
+          googleWindow.location.replace(googleUrl);
+        } else {
+          window.location.assign(googleUrl);
+        }
+      }, 850);
     } catch (error) {
       console.error("Review clipboard error:", error);
 
-      showMessage(
-        "Automatic copying failed. Please copy your review manually.",
-        "error",
-        4000,
-      );
+      if (googleWindow && !googleWindow.closed) {
+        googleWindow.close();
+      }
 
-      /*
-       * Stay on the review page if copying fails.
-       * This gives the customer a chance to copy manually.
-       */
+      showMessage(
+        "Automatic copying failed. Please try again or copy the text manually.",
+        "error",
+        4000
+      );
     }
   }
+
   return (
     <main className={styles.page}>
       <div className={styles.backgroundGlow} />
 
       <div className={styles.reviewContainer}>
-
         {/* EXPERIENCE INPUT */}
-
         <header className={styles.intro}>
           <h1>Write your experience</h1>
-
-          <p>
-            Get an AI-assisted review suggestion.
-          </p>
+          <p>Get an AI-assisted review suggestion.</p>
         </header>
 
         <section
@@ -488,27 +413,19 @@ export default function ReviewPage({ qrIdentifier }) {
           />
 
           <div className={styles.inputFooter}>
+            <span>Your own words help shape the suggestion.</span>
             <span>
-              Your own words help shape the suggestion.
-            </span>
-
-            <span>
-              {experience.length}/
-              {MAX_EXPERIENCE_LENGTH}
+              {experience.length}/{MAX_EXPERIENCE_LENGTH}
             </span>
           </div>
         </section>
 
         {/* STAR RATING */}
-
         <section
           className={styles.ratingSection}
           aria-labelledby="rating-heading"
         >
-          <h2
-            id="rating-heading"
-            className={styles.fieldHeading}
-          >
+          <h2 id="rating-heading" className={styles.fieldHeading}>
             Choose your rating
           </h2>
 
@@ -522,9 +439,7 @@ export default function ReviewPage({ qrIdentifier }) {
                 key={star}
                 type="button"
                 className={`${styles.starButton} ${
-                  star <= rating
-                    ? styles.starSelected
-                    : ""
+                  star <= rating ? styles.starSelected : ""
                 }`}
                 onClick={() => handleRating(star)}
                 role="radio"
@@ -538,12 +453,8 @@ export default function ReviewPage({ qrIdentifier }) {
             ))}
           </div>
 
-          <p
-            className={styles.ratingHint}
-            aria-live="polite"
-          >
+          <p className={styles.ratingHint} aria-live="polite">
             {rating === 0 && "Tap a star to continue"}
-
             {rating === 1 && "1 star"}
             {rating === 2 && "2 stars"}
             {rating === 3 && "3 stars"}
@@ -553,16 +464,12 @@ export default function ReviewPage({ qrIdentifier }) {
         </section>
 
         {/* REVIEW SUGGESTIONS */}
-
         <section
           className={styles.optionsSection}
           aria-labelledby="options-heading"
         >
           <div className={styles.optionsHeader}>
-            <h2
-              id="options-heading"
-              className={styles.fieldHeading}
-            >
+            <h2 id="options-heading" className={styles.fieldHeading}>
               Review suggestions
             </h2>
 
@@ -575,8 +482,7 @@ export default function ReviewPage({ qrIdentifier }) {
 
           {!rating && (
             <div className={styles.emptyState}>
-              Your suggestions will appear here
-              after you choose a rating.
+              Your suggestions will appear here after you choose a rating.
             </div>
           )}
 
@@ -586,14 +492,8 @@ export default function ReviewPage({ qrIdentifier }) {
               role="status"
               aria-live="polite"
             >
-              <span
-                className={styles.loader}
-                aria-hidden="true"
-              />
-
-              <span>
-                Preparing your suggestions…
-              </span>
+              <span className={styles.loader} aria-hidden="true" />
+              <span>Preparing your suggestions…</span>
             </div>
           )}
 
@@ -609,83 +509,54 @@ export default function ReviewPage({ qrIdentifier }) {
                   <article
                     key={`${rating}-${index}`}
                     ref={(element) => {
-                      cardRefs.current[index] =
-                        element;
+                      cardRefs.current[index] = element;
                     }}
-                    className={`${
-                      styles.reviewCard
-                    } ${
+                    className={`${styles.reviewCard} ${
                       activeIndex === index
                         ? styles.reviewCardActive
                         : ""
                     }`}
-                    onClick={() =>
-                      centerCard(index)
-                    }
+                    onClick={() => centerCard(index)}
                   >
-                    <div
-                      className={styles.cardTopline}
-                    >
-                      <span
-                        className={styles.cardNumber}
-                      >
+                    <div className={styles.cardTopline}>
+                      <span className={styles.cardNumber}>
                         OPTION {index + 1}
                       </span>
 
                       {activeIndex === index && (
-                        <span
-                          className={styles.editLabel}
-                        >
+                        <span className={styles.editLabel}>
                           EDIT YOUR REVIEW
                         </span>
                       )}
                     </div>
 
                     <textarea
-                      className={
-                        styles.reviewTextarea
-                      }
+                      className={styles.reviewTextarea}
                       value={review}
                       onChange={(event) =>
-                        handleReviewChange(
-                          index,
-                          event.target.value
-                        )
+                        handleReviewChange(index, event.target.value)
                       }
-                      onFocus={() =>
-                        setActiveIndex(index)
-                      }
-                      onClick={(event) =>
-                        event.stopPropagation()
-                      }
-                      aria-label={`Edit review option ${
-                        index + 1
-                      }`}
+                      onFocus={() => setActiveIndex(index)}
+                      onClick={(event) => event.stopPropagation()}
+                      aria-label={`Edit review option ${index + 1}`}
                       maxLength={MAX_REVIEW_LENGTH}
                       rows={7}
                       spellCheck="true"
                     />
 
-                    <div
-                      className={styles.cardFooter}
-                    >
+                    <div className={styles.cardFooter}>
                       <span>
-                        {review.length}/
-                        {MAX_REVIEW_LENGTH}
+                        {review.length}/{MAX_REVIEW_LENGTH}
                       </span>
 
                       <button
                         type="button"
-                        className={
-                          styles.centerButton
-                        }
+                        className={styles.centerButton}
                         onClick={(event) => {
                           event.stopPropagation();
                           centerCard(index);
                         }}
-                        aria-label={`Center review option ${
-                          index + 1
-                        }`}
+                        aria-label={`Center review option ${index + 1}`}
                       >
                         {activeIndex === index
                           ? "Selected ✓"
@@ -696,10 +567,7 @@ export default function ReviewPage({ qrIdentifier }) {
                 ))}
               </div>
 
-              <div
-                className={styles.sliderHint}
-                aria-hidden="true"
-              >
+              <div className={styles.sliderHint} aria-hidden="true">
                 <span>‹</span>
                 <span>Swipe to explore</span>
                 <span>›</span>
@@ -713,23 +581,15 @@ export default function ReviewPage({ qrIdentifier }) {
                   <button
                     key={index}
                     type="button"
-                    className={`${
-                      styles.sliderDot
-                    } ${
+                    className={`${styles.sliderDot} ${
                       activeIndex === index
                         ? styles.sliderDotActive
                         : ""
                     }`}
-                    onClick={() =>
-                      centerCard(index)
-                    }
-                    aria-label={`Show review option ${
-                      index + 1
-                    }`}
+                    onClick={() => centerCard(index)}
+                    aria-label={`Show review option ${index + 1}`}
                     aria-current={
-                      activeIndex === index
-                        ? "true"
-                        : undefined
+                      activeIndex === index ? "true" : undefined
                     }
                   />
                 ))}
@@ -739,62 +599,43 @@ export default function ReviewPage({ qrIdentifier }) {
         </section>
 
         {/* POST ON GOOGLE */}
-
         <button
           type="button"
           className={styles.googleButton}
           onClick={handlePostOnGoogle}
-          disabled={
-            generating || reviews.length === 0
-          }
+          disabled={generating || reviews.length === 0}
         >
           <span>Post on Google</span>
           <span aria-hidden="true">↗</span>
         </button>
 
         {/* FOOTER */}
-
         <footer className={styles.footer}>
           <span>
-            Powered by{" "}
-            <strong>Shryxa Review</strong>
+            Powered by <strong>Shryxa Review</strong>
           </span>
 
-          <span
-            className={styles.footerDot}
-            aria-hidden="true"
-          >
+          <span className={styles.footerDot} aria-hidden="true">
             •
           </span>
 
-          <span>
-            Thank you for your feedback ❤️
-          </span>
+          <span>Thank you for your feedback ❤️</span>
         </footer>
       </div>
 
       {/* TOAST NOTIFICATION */}
-
       {message && (
         <div
-          className={`${
-            styles.toast
-          } ${
+          className={`${styles.toast} ${
             messageType === "success"
               ? styles.toastSuccess
               : messageType === "error"
                 ? styles.toastError
                 : ""
           }`}
-          role={
-            messageType === "error"
-              ? "alert"
-              : "status"
-          }
+          role={messageType === "error" ? "alert" : "status"}
           aria-live={
-            messageType === "error"
-              ? "assertive"
-              : "polite"
+            messageType === "error" ? "assertive" : "polite"
           }
         >
           <span aria-hidden="true">
