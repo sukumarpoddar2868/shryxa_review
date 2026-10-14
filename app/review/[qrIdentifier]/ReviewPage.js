@@ -15,6 +15,11 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
 
+  // Manual-copy fallback state.
+  const [showManualCopy, setShowManualCopy] = useState(false);
+  const [manualCopyText, setManualCopyText] = useState("");
+  const manualCopyRef = useRef(null);
+
   const sliderRef = useRef(null);
   const cardRefs = useRef([]);
   const toastTimerRef = useRef(null);
@@ -22,21 +27,18 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
   const generationIdRef = useRef(0);
 
   // Display a notification.
-  const showMessage = useCallback(
-    (text, type = "info", duration = 2400) => {
-      setMessage(text);
-      setMessageType(type);
+  const showMessage = useCallback((text, type = "info", duration = 2400) => {
+    setMessage(text);
+    setMessageType(type);
 
-      if (toastTimerRef.current) {
-        window.clearTimeout(toastTimerRef.current);
-      }
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
 
-      toastTimerRef.current = window.setTimeout(() => {
-        setMessage("");
-      }, duration);
-    },
-    []
-  );
+    toastTimerRef.current = window.setTimeout(() => {
+      setMessage("");
+    }, duration);
+  }, []);
 
   // Clean up timers and invalidate pending requests on unmount.
   useEffect(() => {
@@ -60,7 +62,6 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
     setReviews([]);
     setActiveIndex(0);
 
-    // Require the customer's experience before generating reviews.
     if (!experience.trim()) {
       setGenerating(false);
       generationIdRef.current++;
@@ -92,7 +93,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
 
       const data = await response.json().catch(() => ({}));
 
-      // Ignore an outdated response if the customer selected another rating.
+      // Ignore outdated responses.
       if (generationId !== generationIdRef.current) {
         return;
       }
@@ -115,7 +116,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
         return;
       }
 
-      // Validate the response before displaying the suggestions.
+      // Validate the response before displaying suggestions.
       if (
         !Array.isArray(data.reviews) ||
         data.reviews.length !== 4 ||
@@ -235,7 +236,12 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
         await navigator.clipboard.writeText(reviewText);
         return true;
       } catch (error) {
-        console.error("Clipboard API failed:", error);
+        console.error("Clipboard API failed:", {
+          name: error.name,
+          message: error.message,
+          isSecureContext: window.isSecureContext,
+          clipboardAvailable: Boolean(navigator.clipboard),
+        });
       }
     }
 
@@ -281,7 +287,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
     return true;
   }
 
-  // Retrieve and validate the Google Review URL passed by page.js.
+  // Retrieve and validate the Google Review URL.
   function getGoogleReviewUrl() {
     if (!googleReviewUrl) {
       throw new Error("Google Review URL is unavailable.");
@@ -349,11 +355,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
     try {
       await copyReviewText(reviewText);
 
-      showMessage(
-        "Review copied! Paste it on Google.",
-        "success",
-        2500
-      );
+      showMessage("Review copied! Paste it on Google.", "success", 2500);
 
       redirectTimerRef.current = window.setTimeout(() => {
         if (googleWindow && !googleWindow.closed) {
@@ -369,12 +371,35 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
         googleWindow.close();
       }
 
+      // Preserve the review and offer manual copying.
+      setManualCopyText(reviewText);
+      setShowManualCopy(true);
+
       showMessage(
-        "Automatic copying failed. Please try again or copy the text manually.",
+        "Automatic copying was blocked. Copy your review manually.",
         "error",
         4000
       );
     }
+  }
+
+  // Select the manual-copy text for the customer.
+  function selectManualCopyText() {
+    const textarea = manualCopyRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    showMessage(
+      "Long-press the selected text and choose Copy if needed.",
+      "info",
+      4000
+    );
   }
 
   return (
@@ -444,9 +469,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
                 onClick={() => handleRating(star)}
                 role="radio"
                 aria-checked={rating === star}
-                aria-label={`${star} ${
-                  star === 1 ? "star" : "stars"
-                }`}
+                aria-label={`${star} ${star === 1 ? "star" : "stars"}`}
               >
                 {star <= rating ? "★" : "☆"}
               </button>
@@ -512,9 +535,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
                       cardRefs.current[index] = element;
                     }}
                     className={`${styles.reviewCard} ${
-                      activeIndex === index
-                        ? styles.reviewCardActive
-                        : ""
+                      activeIndex === index ? styles.reviewCardActive : ""
                     }`}
                     onClick={() => centerCard(index)}
                   >
@@ -558,9 +579,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
                         }}
                         aria-label={`Center review option ${index + 1}`}
                       >
-                        {activeIndex === index
-                          ? "Selected ✓"
-                          : "Use this"}
+                        {activeIndex === index ? "Selected ✓" : "Use this"}
                       </button>
                     </div>
                   </article>
@@ -582,9 +601,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
                     key={index}
                     type="button"
                     className={`${styles.sliderDot} ${
-                      activeIndex === index
-                        ? styles.sliderDotActive
-                        : ""
+                      activeIndex === index ? styles.sliderDotActive : ""
                     }`}
                     onClick={() => centerCard(index)}
                     aria-label={`Show review option ${index + 1}`}
@@ -623,6 +640,135 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
         </footer>
       </div>
 
+      {/* MANUAL COPY MODAL
+          Kept outside the review suggestions condition so it does not
+          disappear when that section changes. */}
+      {showManualCopy && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="manual-copy-title"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0, 0, 0, 0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              color: "#222",
+              borderRadius: "16px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "420px",
+              maxHeight: "90dvh",
+              overflowY: "auto",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h2
+              id="manual-copy-title"
+              style={{
+                marginTop: 0,
+                fontSize: "20px",
+              }}
+            >
+              Copy your review
+            </h2>
+
+            <p
+              style={{
+                color: "#555",
+                lineHeight: 1.5,
+              }}
+            >
+              Automatic copying was blocked by your browser. Tap the text
+              below, select all, and choose Copy. Then paste it into your
+              Google review.
+            </p>
+
+            <textarea
+              ref={manualCopyRef}
+              value={manualCopyText}
+              readOnly
+              onFocus={(event) => event.target.select()}
+              aria-label="Your review text"
+              style={{
+                width: "100%",
+                minHeight: "140px",
+                boxSizing: "border-box",
+                padding: "12px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                fontSize: "16px",
+                lineHeight: 1.5,
+                resize: "vertical",
+                marginBottom: "16px",
+                color: "#222",
+                background: "#fff",
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={selectManualCopyText}
+              style={{
+                width: "100%",
+                padding: "13px",
+                border: "none",
+                borderRadius: "8px",
+                background: "#1a73e8",
+                color: "#fff",
+                fontSize: "16px",
+                fontWeight: 600,
+                cursor: "pointer",
+                marginBottom: "10px",
+              }}
+            >
+              Select Review Text
+            </button>
+
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#666",
+                lineHeight: 1.5,
+                margin: "0 0 14px",
+              }}
+            >
+              On your phone, long-press the text and choose Copy from the
+              selection menu if needed.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowManualCopy(false);
+                setManualCopyText("");
+              }}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                background: "#fff",
+                color: "#333",
+                fontSize: "15px",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* TOAST NOTIFICATION */}
       {message && (
         <div
@@ -634,9 +780,7 @@ export default function ReviewPage({ qrIdentifier, googleReviewUrl }) {
                 : ""
           }`}
           role={messageType === "error" ? "alert" : "status"}
-          aria-live={
-            messageType === "error" ? "assertive" : "polite"
-          }
+          aria-live={messageType === "error" ? "assertive" : "polite"}
         >
           <span aria-hidden="true">
             {messageType === "success"
