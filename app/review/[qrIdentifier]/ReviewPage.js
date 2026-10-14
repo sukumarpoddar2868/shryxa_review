@@ -279,7 +279,13 @@ export default function ReviewPage({ qrIdentifier }) {
    * is unavailable.
    */
   async function copyReviewText(text) {
+    if (!text || !text.trim()) {
+      throw new Error("Review text is empty.");
+    }
+
+    // Preferred method for HTTPS browsers.
     if (
+      typeof navigator !== "undefined" &&
       navigator.clipboard &&
       window.isSecureContext
     ) {
@@ -287,37 +293,31 @@ export default function ReviewPage({ qrIdentifier }) {
       return;
     }
 
-    const temporaryTextarea =
-      document.createElement("textarea");
+    // Fallback for browsers without Clipboard API access.
+    const textarea = document.createElement("textarea");
 
-    temporaryTextarea.value = text;
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "-9999px";
+    textarea.style.opacity = "0";
 
-    temporaryTextarea.setAttribute(
-      "readonly",
-      ""
-    );
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
 
-    temporaryTextarea.style.position = "fixed";
-    temporaryTextarea.style.opacity = "0";
-    temporaryTextarea.style.pointerEvents = "none";
+    let copied = false;
 
-    document.body.appendChild(temporaryTextarea);
-
-    temporaryTextarea.select();
-
-    temporaryTextarea.setSelectionRange(
-      0,
-      temporaryTextarea.value.length
-    );
-
-    const copied = document.execCommand("copy");
-
-    document.body.removeChild(temporaryTextarea);
+    try {
+      copied = document.execCommand("copy");
+    } finally {
+      textarea.remove();
+    }
 
     if (!copied) {
-      throw new Error(
-        "Clipboard copy was not successful."
-      );
+      throw new Error("Clipboard copy failed.");
     }
   }
 
@@ -356,34 +356,20 @@ export default function ReviewPage({ qrIdentifier }) {
    * 5. Redirect the new tab to Google.
    */
   async function handlePostOnGoogle() {
-    const reviewText = (
-      reviews[activeIndex] || ""
-    ).trim();
+    const reviewText = (reviews[activeIndex] || "").trim();
 
     if (!rating) {
-      showMessage(
-        "Choose a star rating first.",
-        "info"
-      );
-
+      showMessage("Choose a star rating first.", "info");
       return;
     }
 
     if (generating) {
-      showMessage(
-        "Please wait for your review options.",
-        "info"
-      );
-
+      showMessage("Please wait for your review options.", "info");
       return;
     }
 
     if (!reviewText) {
-      showMessage(
-        "Write your review in the card before continuing.",
-        "info"
-      );
-
+      showMessage("Write your review in the card before continuing.", "info");
       return;
     }
 
@@ -392,89 +378,56 @@ export default function ReviewPage({ qrIdentifier }) {
     try {
       googleUrl = getGoogleReviewUrl();
     } catch (error) {
-      console.error(
-        "Google review URL error:",
-        error
-      );
-
-      showMessage(
-        "The Google review link is unavailable right now.",
-        "error"
-      );
-
+      console.error("Google review URL error:", error);
+      showMessage("The Google review link is unavailable right now.", "error");
       return;
     }
 
-    /*
-     * Open synchronously inside the click handler.
-     * This helps avoid popup blockers.
-     */
+    // Open a tab immediately to avoid popup blockers.
     let googleWindow = null;
 
     try {
-      googleWindow = window.open(
-        "about:blank",
-        "_blank"
-      );
+      googleWindow = window.open("about:blank", "_blank");
 
       if (googleWindow) {
         googleWindow.opener = null;
       }
-    } catch {
-      googleWindow = null;
+    } catch (error) {
+      console.warn("Could not open a new tab:", error);
     }
 
     try {
-      // Copy the currently active, editable review.
+      // Copy the active review.
       await copyReviewText(reviewText);
 
       showMessage(
         "Your review has been copied to the clipboard.",
         "success",
-        1800
+        1800,
       );
-
-      /*
-       * Give the customer a brief opportunity to see
-       * the confirmation before navigating to Google.
-       */
-      redirectTimerRef.current =
-        window.setTimeout(() => {
-          if (
-            googleWindow &&
-            !googleWindow.closed
-          ) {
-            googleWindow.location.replace(
-              googleUrl
-            );
-          } else {
-            /*
-             * Fallback if a new tab was blocked.
-             */
-            window.location.assign(googleUrl);
-          }
-        }, 850);
     } catch (error) {
-      console.error(
-        "Clipboard error:",
-        error
-      );
-
-      if (
-        googleWindow &&
-        !googleWindow.closed
-      ) {
-        googleWindow.close();
-      }
+      console.error("Clipboard copy failed:", error);
 
       showMessage(
-        "Couldn't copy automatically. Please try again or copy the text manually.",
+        "Couldn't copy automatically. You can copy your review manually.",
         "error",
-        3500
+        3500,
       );
+    } finally {
+      // Never leave the user stranded on about:blank.
+      if (googleWindow && !googleWindow.closed) {
+        try {
+          googleWindow.location.replace(googleUrl);
+        } catch (error) {
+          console.error("Could not redirect the Google tab:", error);
+          window.location.href = googleUrl;
+        }
+      } else {
+        // If the browser blocked the popup, use the current tab.
+        window.location.href = googleUrl;
+      }
     }
   }
-
   return (
     <main className={styles.page}>
       <div className={styles.backgroundGlow} />
