@@ -279,48 +279,67 @@ export default function ReviewPage({ qrIdentifier }) {
    * is unavailable.
    */
   async function copyReviewText(text) {
-    if (!text || !text.trim()) {
-      throw new Error("Review text is empty.");
-    }
+  const reviewText = text?.trim();
 
-    // Preferred method for HTTPS browsers.
-    if (
-      typeof navigator !== "undefined" &&
-      navigator.clipboard &&
-      window.isSecureContext
-    ) {
-      await navigator.clipboard.writeText(text);
-      return;
-    }
+  if (!reviewText) {
+    throw new Error("Review text is empty.");
+  }
 
-    // Fallback for browsers without Clipboard API access.
-    const textarea = document.createElement("textarea");
-
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.top = "0";
-    textarea.style.left = "-9999px";
-    textarea.style.opacity = "0";
-
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    textarea.setSelectionRange(0, textarea.value.length);
-
-    let copied = false;
-
+  // Modern clipboard API: preferred on Android Chrome and iOS browsers.
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.clipboard &&
+    window.isSecureContext
+  ) {
     try {
-      copied = document.execCommand("copy");
-    } finally {
-      textarea.remove();
-    }
-
-    if (!copied) {
-      throw new Error("Clipboard copy failed.");
+      await navigator.clipboard.writeText(reviewText);
+      return true;
+    } catch (error) {
+      console.error("Clipboard API failed:", error);
     }
   }
 
+  // Fallback for browsers that do not support clipboard.writeText().
+  const textarea = document.createElement("textarea");
+
+  textarea.value = reviewText;
+  textarea.setAttribute("readonly", "");
+
+  Object.assign(textarea.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "2px",
+    height: "2px",
+    padding: "0",
+    border: "none",
+    opacity: "0.01",
+    fontSize: "16px",
+    zIndex: "-1",
+  });
+
+  document.body.appendChild(textarea);
+
+  let copied = false;
+
+  try {
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, reviewText.length);
+
+    copied = document.execCommand("copy");
+  } catch (error) {
+    console.error("Fallback clipboard copy failed:", error);
+  } finally {
+    textarea.remove();
+  }
+
+  if (!copied) {
+    throw new Error("Unable to copy review text.");
+  }
+
+  return true;
+}
   /*
    * Get the Google review URL.
    *
@@ -358,74 +377,74 @@ export default function ReviewPage({ qrIdentifier }) {
   async function handlePostOnGoogle() {
     const reviewText = (reviews[activeIndex] || "").trim();
 
+    // Validate the selected rating.
     if (!rating) {
       showMessage("Choose a star rating first.", "info");
       return;
     }
 
+    // Prevent actions while suggestions are generating.
     if (generating) {
       showMessage("Please wait for your review options.", "info");
       return;
     }
 
+    // Validate the active review.
     if (!reviewText) {
       showMessage("Write your review in the card before continuing.", "info");
       return;
     }
 
+    // Get the Google Maps URL.
     let googleUrl;
 
     try {
       googleUrl = getGoogleReviewUrl();
     } catch (error) {
-      console.error("Google review URL error:", error);
+      console.error("Google URL error:", error);
+
       showMessage("The Google review link is unavailable right now.", "error");
+
       return;
     }
 
-    // Open a tab immediately to avoid popup blockers.
-    let googleWindow = null;
+    /*
+     * IMPORTANT:
+     * Start the clipboard operation directly from the click handler.
+     * Do not open about:blank before attempting to copy.
+     */
+    let copyPromise;
 
     try {
-      googleWindow = window.open("about:blank", "_blank");
-
-      if (googleWindow) {
-        googleWindow.opener = null;
-      }
+      copyPromise = copyReviewText(reviewText);
     } catch (error) {
-      console.warn("Could not open a new tab:", error);
+      console.error("Could not start clipboard operation:", error);
+      copyPromise = Promise.reject(error);
     }
 
     try {
-      // Copy the active review.
-      await copyReviewText(reviewText);
+      await copyPromise;
 
-      showMessage(
-        "Your review has been copied to the clipboard.",
-        "success",
-        1800,
-      );
+      showMessage("Review copied! Paste it on Google.", "success", 2500);
+
+      /*
+       * Navigate only after the copy operation succeeds.
+       * This prevents a failed copy from being mistaken for success.
+       */
+      window.location.assign(googleUrl);
     } catch (error) {
-      console.error("Clipboard copy failed:", error);
+      console.error("Review clipboard error:", error);
 
       showMessage(
-        "Couldn't copy automatically. You can copy your review manually.",
+        "Automatic copying failed. Please copy your review manually.",
         "error",
-        3500,
+        4000,
       );
-    } finally {
-      // Never leave the user stranded on about:blank.
-      if (googleWindow && !googleWindow.closed) {
-        try {
-          googleWindow.location.replace(googleUrl);
-        } catch (error) {
-          console.error("Could not redirect the Google tab:", error);
-          window.location.href = googleUrl;
-        }
-      } else {
-        // If the browser blocked the popup, use the current tab.
-        window.location.href = googleUrl;
-      }
+
+      /*
+       * Stay on the review page if copying fails.
+       * This gives the customer a chance to copy manually.
+       */
     }
   }
   return (
