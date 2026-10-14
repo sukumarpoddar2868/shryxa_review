@@ -32,7 +32,20 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/client/dashboard");
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
+
+      if (session?.user?.role === "ADMIN") {
+        router.replace("/admin/dashboard");
+      } else if (session?.user?.role === "CLIENT") {
+        router.replace("/client/dashboard");
+      } else {
+        setError(
+          "Your account role could not be verified. Please contact support.",
+        );
+        return;
+      }
+
       router.refresh();
     } catch (error) {
       console.error("Login failed:", error);
