@@ -23,7 +23,7 @@ export async function GET() {
       prisma.business.count(),
 
       // Businesses whose Business.status is ACTIVE
-      prisma.business.count({
+      prisma.subscription.count({
         where: {
           status: "ACTIVE",
         },

@@ -34,6 +34,10 @@ export default function AdminDashboard() {
   const [shippingError, setShippingError] = useState("");
   const [shippingSuccess, setShippingSuccess] = useState("");
 
+  // Standee PDF download state
+  const [standeeDownload, setStandeeDownload] = useState(null);
+  const [standeeDownloadError, setStandeeDownloadError] = useState("");
+
   // Dashboard navigation
   const menuItems = [
     {
@@ -130,6 +134,7 @@ export default function AdminDashboard() {
     setOrderDetailsError("");
     setShippingError("");
     setShippingSuccess("");
+    setStandeeDownloadError("");
     setOrderDetailsLoading(true);
 
     try {
@@ -209,6 +214,64 @@ export default function AdminDashboard() {
     }
   }
 
+  // Download the standee PDF associated with a specific order
+  async function downloadOrderStandee(orderId, format) {
+    setStandeeDownload({ orderId, format });
+    setStandeeDownloadError("");
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/standee`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ format }),
+      });
+
+      if (!response.ok) {
+        let message = "Unable to download the standee PDF.";
+
+        try {
+          const data = await response.json();
+          message = data.error || message;
+        } catch {
+          // Keep the default error message.
+        }
+
+        throw new Error(message);
+      }
+
+      const pdfBlob = await response.blob();
+
+      if (!pdfBlob.size) {
+        throw new Error("The generated PDF is empty.");
+      }
+
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download =
+        format === "4x6"
+          ? `order-${orderId}-standee-4x6-inch.pdf`
+          : `order-${orderId}-standee-12x12-cm.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error("Admin standee download error:", err);
+
+      setStandeeDownloadError(
+        err.message || "Unable to download the standee PDF.",
+      );
+    } finally {
+      setStandeeDownload(null);
+    }
+  }
+
   // Formatting helpers
   function formatCurrency(amount, currency = "INR") {
     const numericAmount = Number(amount ?? 0);
@@ -272,7 +335,7 @@ export default function AdminDashboard() {
     return styles.statusInactive;
   }
 
-  // Common table styles for the new orders section and modal
+  // Common table styles for the orders section and modal
   const extraStyles = {
     empty: {
       padding: "28px 16px",
@@ -384,7 +447,6 @@ export default function AdminDashboard() {
           <span className={styles.logoBox}>
             <img src="/shryxa-logo.png" alt="Shryxa Review" />
           </span>
-
           <span>Shryxa</span>
         </Link>
 
@@ -406,7 +468,6 @@ export default function AdminDashboard() {
           <span className={styles.logoBox}>
             <img src="/shryxa-logo.png" alt="Shryxa Review" />
           </span>
-
           <span>Shryxa</span>
         </Link>
 
@@ -449,7 +510,6 @@ export default function AdminDashboard() {
             <h1>Overview</h1>
             <p className={styles.subtitle}>Manage your Shryxa platform.</p>
           </div>
-
           <div className={styles.profileCircle}>A</div>
         </div>
 
@@ -554,11 +614,8 @@ export default function AdminDashboard() {
                       <td className={styles.businessCell}>
                         {business.shopName}
                       </td>
-
                       <td>{business.ownerName}</td>
-
                       <td>{business.phone || "—"}</td>
-
                       <td>
                         <span
                           className={`${styles.status} ${getStatusClass(
@@ -619,11 +676,9 @@ export default function AdminDashboard() {
                       <td className={styles.businessCell}>
                         {payment.business?.shopName || "—"}
                       </td>
-
                       <td>
                         {formatCurrency(payment.amount, payment.currency)}
                       </td>
-
                       <td>
                         <span
                           className={`${styles.status} ${getStatusClass(
@@ -633,7 +688,6 @@ export default function AdminDashboard() {
                           {displayStatus(payment.status)}
                         </span>
                       </td>
-
                       <td>{formatDate(payment.createdAt)}</td>
                     </tr>
                   ))
@@ -762,7 +816,6 @@ export default function AdminDashboard() {
             <div style={extraStyles.modalHeader}>
               <div>
                 <p className={styles.sectionEyebrow}>STANDEE ORDER</p>
-
                 <h2 id="order-modal-title">
                   {selectedOrder
                     ? `Order #${selectedOrder.id}`
@@ -778,6 +831,7 @@ export default function AdminDashboard() {
                   setOrderDetailsError("");
                   setShippingError("");
                   setShippingSuccess("");
+                  setStandeeDownloadError("");
                 }}
                 aria-label="Close order details"
               >
@@ -966,11 +1020,89 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
+                {/* Standee PDF downloads */}
+                <div style={{ marginTop: "22px" }}>
+                  <h3 style={{ marginBottom: "8px" }}>Standee templates</h3>
+
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#64748b",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    Download the print-ready PDF for this order&apos;s business.
+                  </p>
+
+                  {standeeDownloadError && (
+                    <div
+                      style={{
+                        ...extraStyles.message,
+                        marginBottom: "12px",
+                      }}
+                      role="alert"
+                    >
+                      {standeeDownloadError}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      style={{
+                        ...extraStyles.secondaryButton,
+                        opacity:
+                          standeeDownload?.orderId === selectedOrder.id
+                            ? 0.65
+                            : 1,
+                      }}
+                      disabled={standeeDownload?.orderId === selectedOrder.id}
+                      onClick={() =>
+                        downloadOrderStandee(selectedOrder.id, "4x6")
+                      }
+                    >
+                      {standeeDownload?.orderId === selectedOrder.id &&
+                      standeeDownload?.format === "4x6"
+                        ? "Generating PDF…"
+                        : "Download 4×6 PDF"}
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{
+                        ...extraStyles.secondaryButton,
+                        opacity:
+                          standeeDownload?.orderId === selectedOrder.id
+                            ? 0.65
+                            : 1,
+                      }}
+                      disabled={standeeDownload?.orderId === selectedOrder.id}
+                      onClick={() =>
+                        downloadOrderStandee(selectedOrder.id, "12x12cm")
+                      }
+                    >
+                      {standeeDownload?.orderId === selectedOrder.id &&
+                      standeeDownload?.format === "12x12cm"
+                        ? "Generating PDF…"
+                        : "Download 12×12 cm PDF"}
+                    </button>
+                  </div>
+                </div>
+
                 <div style={extraStyles.modalFooter}>
                   <button
                     type="button"
                     style={extraStyles.secondaryButton}
-                    onClick={() => setSelectedOrder(null)}
+                    onClick={() => {
+                      setSelectedOrder(null);
+                      setStandeeDownloadError("");
+                    }}
                   >
                     Close
                   </button>
