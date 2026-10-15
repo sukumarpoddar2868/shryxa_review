@@ -712,168 +712,408 @@
   }
 }
 
+/* =========================================================
+   RESPONSIVE QR PAGE
+========================================================= */
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.page,
+.page * {
+  box-sizing: border-box;
+}
+
+.main {
+  min-width: 0;
+}
+
+.qrCard {
+  width: 100%;
+  min-width: 0;
+}
+
+.qrInfo,
+.qrPreviewSection {
+  min-width: 0;
+}
+
+.qrInfo h2,
+.description,
+.infoItem,
+.infoItem strong {
+  overflow-wrap: anywhere;
+}
+
+.urlBox {
+  width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+}
 
 /* =========================================================
-   MOBILE
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main {
+    margin-left: 220px;
+    padding: 35px 26px 45px;
+  }
+
+  .qrCard {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 28px;
+    padding: 28px;
+  }
+
+  .qrBox {
+    width: min(100%, 270px);
+    height: auto;
+    aspect-ratio: 1;
+    padding: 16px;
+  }
+
+  .qrPreviewSection {
+    width: 100%;
+  }
+
+  .qrInfo h2 {
+    font-size: 24px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .downloadButton,
+  .secondaryButton {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* =========================================================
+   MOBILE HEADER AND NAVIGATION
 ========================================================= */
 
 @media (max-width: 760px) {
   .mobileHeader {
     position: fixed;
-
     top: 0;
     left: 0;
+    right: 0;
 
     width: 100%;
-    height: 70px;
+    height: 64px;
 
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 14px;
 
-    padding: 0 20px;
+    padding: 0 16px;
 
     background: #ffffff;
-
     border-bottom: 1px solid #e7ece8;
+    box-shadow: 0 3px 12px rgba(26, 56, 35, 0.04);
 
-    z-index: 200;
-
-    box-sizing: border-box;
+    z-index: 300;
   }
 
+  /* Put the hamburger on the TOP-LEFT */
+  .menuButton {
+    order: 1;
+
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid #dfe7e1;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #284c32;
+
+    font-family: inherit;
+    font-size: 23px;
+    line-height: 1;
+
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .menuButton:hover {
+    background: #f2f6f3;
+  }
+
+  .menuButton:focus-visible {
+    outline: 2px solid #5c8b67;
+    outline-offset: 3px;
+  }
 
   .mobileBrand {
-    display: flex;
+    order: 0;
+    flex: 1;
+    display: inline-flex;
     align-items: center;
+    gap: 9px;
 
-    gap: 10px;
+    min-width: 0;
 
     color: #173522;
-
     font-size: 19px;
     font-weight: 700;
 
     text-decoration: none;
   }
 
-
   .mobileBrand .logoBox {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
   }
 
-
-  .menuButton {
-    width: 42px;
-    height: 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid #dfe7e1;
-
-    border-radius: 9px;
-
-    background: #ffffff;
-
-    color: #284c32;
-
-    font-size: 22px;
-
-    cursor: pointer;
-  }
-
-
-  .sidebar {
-    top: 70px;
-
-    width: 250px;
-    height: calc(100vh - 70px);
-
-    padding: 24px 18px;
-
-    transform: translateX(-100%);
-
-    transition: transform 0.25s ease;
-
-    box-shadow:
-      10px 0 30px rgba(20, 50, 30, 0.08);
-  }
-
-
-  .sidebarOpen {
-    transform: translateX(0);
-  }
-
-
+  /* Hide the desktop brand in the drawer */
   .sidebar .brand {
     display: none;
   }
 
+  /* Slide-in sidebar */
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
 
-  .main {
-    margin-left: 0;
+    width: min(280px, 85vw);
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
 
-    padding: 105px 22px 45px;
+    display: flex;
+    flex-direction: column;
+
+    padding: 22px 16px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    background: #ffffff;
+    border-right: 1px solid #e7ece8;
+
+    z-index: 250;
+
+    transform: translateX(-105%);
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+      transform 0.25s ease,
+      visibility 0.25s ease;
+
+    box-shadow: 10px 0 30px rgba(20, 50, 30, 0.08);
   }
 
+  .sidebarOpen {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .navigation {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 7px;
+  }
+
+  .navItem {
+    width: 100%;
+    min-height: 46px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+  }
+
+  .sidebarBottom {
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+
+  .logoutButton {
+    min-height: 46px;
+  }
+
+  /* Main page */
+  .main {
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    margin-left: 0;
+    padding: 94px 22px 36px;
+  }
 
   .topBar {
-    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+
+    margin-bottom: 28px;
   }
 
+  .topBar>div:first-child {
+    min-width: 0;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+  }
 
   .topBar h1 {
-    font-size: 29px;
+    font-size: 28px;
+    line-height: 1.3;
+    letter-spacing: -0.6px;
+    overflow-wrap: anywhere;
   }
 
+  .businessName {
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
 
+  .profileCircle {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  /* QR card becomes one column */
   .qrCard {
-    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
 
-    gap: 35px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
 
-    padding: 25px;
+    padding: 24px;
+
+    border-radius: 17px;
   }
-
 
   .qrPreviewSection {
     width: 100%;
+    min-width: 0;
   }
-
 
   .qrBox {
-    width: 280px;
-    height: 280px;
+    width: min(100%, 280px);
+    height: auto;
+    aspect-ratio: 1;
+
+    padding: 16px;
   }
 
-
-  .fakeQr {
-    width: 230px;
-    height: 230px;
+  .qrBox img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
   }
 
+  .activeStatus {
+    margin-top: 14px;
+  }
+
+  .qrInfo {
+    width: 100%;
+    min-width: 0;
+  }
 
   .qrInfo h2 {
     font-size: 23px;
+    line-height: 1.35;
+    letter-spacing: -0.4px;
   }
 
+  .description {
+    margin-bottom: 22px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
 
+  .infoItem {
+    padding: 14px 0;
+  }
+
+  .infoItem strong {
+    font-size: 13px;
+  }
+
+  .urlBox {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Stack the three download actions */
   .actions {
+    display: flex;
     flex-direction: column;
-
     align-items: stretch;
-  }
+    gap: 11px;
 
+    width: 100%;
+    margin-top: 24px;
+  }
 
   .downloadButton,
   .secondaryButton {
     width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    max-width: 100%;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 11px 14px;
+
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
-
 
 /* =========================================================
    SMALL MOBILE
@@ -881,76 +1121,133 @@
 
 @media (max-width: 480px) {
   .mobileHeader {
-    padding: 0 15px;
+    height: 60px;
+    gap: 11px;
+    padding: 0 13px;
   }
 
-
-  .main {
-    padding: 95px 15px 35px;
-  }
-
-
-  .topBar h1 {
-    font-size: 26px;
-  }
-
-
-  .profileCircle {
+  .menuButton {
     width: 40px;
     height: 40px;
+    flex-basis: 40px;
   }
 
+  .mobileBrand {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .mobileBrand .logoBox {
+    width: 34px;
+    height: 34px;
+  }
+
+  .sidebar {
+    top: 60px;
+    height: calc(100vh - 60px);
+    height: calc(100dvh - 60px);
+    padding: 20px 14px;
+  }
+
+  .main {
+    padding: 84px 15px 30px;
+  }
+
+  .topBar {
+    gap: 10px;
+    margin-bottom: 23px;
+  }
+
+  .topBar h1 {
+    font-size: 25px;
+  }
+
+  .businessName {
+    font-size: 13px;
+  }
 
   .qrCard {
-    padding: 20px;
-
-    border-radius: 16px;
+    gap: 24px;
+    padding: 18px;
+    border-radius: 15px;
   }
-
 
   .qrBox {
-    width: 240px;
-    height: 240px;
-
-    padding: 17px;
+    width: min(100%, 250px);
+    padding: 13px;
+    border-radius: 14px;
   }
-
-
-  .fakeQr {
-    width: 200px;
-    height: 200px;
-  }
-
-
-  .qrPattern {
-    inset: 16px;
-
-    gap: 5px;
-
-    padding: 14px;
-  }
-
-
-  .qrCornerTopLeft,
-  .qrCornerTopRight,
-  .qrCornerBottomLeft {
-    width: 45px;
-    height: 45px;
-
-    border-width: 7px;
-  }
-
 
   .qrInfo h2 {
     font-size: 21px;
   }
 
-
   .description {
     font-size: 13px;
   }
+
+  .infoItem>span {
+    font-size: 10px;
+  }
+
+  .infoItem strong,
+  .urlBox {
+    font-size: 12px;
+  }
+
+  .actions {
+    gap: 10px;
+  }
+
+  .downloadButton,
+  .secondaryButton {
+    font-size: 12px;
+  }
 }
 
+/* =========================================================
+   EXTRA SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {
+  .mobileHeader {
+    padding: 0 10px;
+    gap: 9px;
+  }
+
+  .mobileBrand {
+    font-size: 17px;
+  }
+
+  .main {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .topBar h1 {
+    font-size: 23px;
+  }
+
+  .qrCard {
+    padding: 15px;
+  }
+
+  .qrBox {
+    width: min(100%, 220px);
+    padding: 10px;
+  }
+
+  .qrInfo h2 {
+    font-size: 20px;
+  }
+
+  .downloadButton,
+  .secondaryButton {
+    padding-right: 10px;
+    padding-left: 10px;
+    font-size: 11px;
+  }
+}
 
 /* =========================================================
    REDUCED MOTION
@@ -958,10 +1255,10 @@
 
 @media (prefers-reduced-motion: reduce) {
 
+  .sidebar,
   .navItem,
   .downloadButton,
-  .secondaryButton,
-  .sidebar {
+  .secondaryButton {
     transition: none;
   }
 }

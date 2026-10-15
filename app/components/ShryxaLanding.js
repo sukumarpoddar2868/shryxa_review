@@ -67,10 +67,10 @@ export default function ShryxaLanding() {
 
 
           <h1>
-            Turn great
-            <span> experiences</span>
+            Get better
+            <span> google reviews </span>
             <br />
-            into great reviews.
+            from your customers.
           </h1>
 
 

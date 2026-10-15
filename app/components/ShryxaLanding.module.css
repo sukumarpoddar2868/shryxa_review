@@ -2159,3 +2159,822 @@
     flex-direction: column;
   }
 }
+
+/* =========================================================
+   RESPONSIVE REFINEMENTS
+   Append this code to the END of ShryxaLanding.module.css
+========================================================= */
+
+/* Prevent unwanted horizontal scrolling */
+.page,
+.page * {
+  box-sizing: border-box;
+}
+
+.page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.page img {
+  max-width: 100%;
+}
+
+.page h1,
+.page h2,
+.page h3,
+.page p {
+  overflow-wrap: anywhere;
+}
+
+/* =========================
+   MEDIUM DESKTOP
+========================= */
+
+@media (max-width: 1100px) {
+
+  .nav,
+  .hero,
+  .storySection,
+  .googleSection {
+    width: calc(100% - 40px);
+  }
+
+  .nav {
+    gap: 16px;
+  }
+
+  .navLinks {
+    gap: 18px;
+  }
+
+  .hero {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+    gap: 24px;
+  }
+
+  .hero h1 {
+    font-size: clamp(48px, 5.6vw, 72px);
+  }
+
+  .heroVisual {
+    min-width: 0;
+    min-height: 560px;
+  }
+
+  .phone {
+    width: min(290px, 78%);
+  }
+
+  .scanCard {
+    left: 0;
+  }
+
+  .aiCard {
+    right: 0;
+  }
+
+  .sectionHeading {
+    gap: 40px;
+  }
+
+  .storySection {
+    gap: 48px;
+  }
+
+  .googleSection {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 35px;
+    padding: 65px 35px;
+  }
+
+  .googlePath {
+    gap: 10px;
+  }
+
+  .pathNode {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .pathLine {
+    width: 18px;
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 980px) {
+
+  /* Navigation */
+  .nav {
+    min-height: 76px;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .navActions .loginButton {
+    display: none;
+  }
+
+  .menuButton {
+    display: block;
+  }
+
+  /* Hero */
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-top: 0;
+  }
+
+  .heroContent {
+    max-width: 760px;
+    padding: 55px 0 20px;
+  }
+
+  .hero h1 {
+    max-width: 760px;
+    font-size: clamp(48px, 7.5vw, 76px);
+    line-height: 1;
+  }
+
+  .heroText {
+    max-width: 640px;
+  }
+
+  .heroVisual {
+    width: 100%;
+    min-height: 570px;
+  }
+
+  .phone {
+    width: min(300px, 65vw);
+  }
+
+  /* General sections */
+  .section,
+  .featureSection {
+    width: calc(100% - 40px);
+  }
+
+  .section {
+    padding: 95px 0;
+  }
+
+  .sectionHeading,
+  .storySection,
+  .googleSection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sectionHeading {
+    gap: 20px;
+    margin-bottom: 42px;
+  }
+
+  .sectionHeading>*,
+  .storyCopy,
+  .googleCopy {
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* Review flow */
+  .flowPanel {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 24px;
+    padding: 32px;
+  }
+
+  /* Customer story */
+  .storySection {
+    gap: 35px;
+    padding: 10px 0 100px;
+  }
+
+  .storyImage {
+    min-height: clamp(320px, 55vw, 520px);
+  }
+
+  /* Feature cards */
+  .featureGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .featureCard:last-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Google section */
+  .googleSection {
+    gap: 35px;
+    padding: 55px 35px;
+  }
+
+  .googlePath {
+    justify-content: space-between;
+  }
+
+  .pathNode {
+    flex: 1 1 0;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 55px 24px 24px;
+  }
+
+  .footerTop {
+    gap: 40px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 640px) {
+
+  /* Shared widths */
+  .nav,
+  .hero,
+  .section,
+  .storySection,
+  .featureSection,
+  .googleSection,
+  .ctaSection {
+    width: calc(100% - 32px);
+    max-width: 100%;
+  }
+
+  /* Navigation */
+  .nav {
+    min-height: 68px;
+    gap: 8px;
+  }
+
+  .brand {
+    min-width: 0;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .brand b {
+    display: none;
+  }
+
+  .logoMark {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .navActions {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  .navCta {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .menuButton {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  /* Hero content */
+  .hero {
+    min-height: auto;
+  }
+
+  .heroContent {
+    padding: 42px 0 8px;
+  }
+
+  .eyebrow,
+  .sectionKicker {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+
+  .hero h1 {
+    margin: 18px 0;
+    font-size: clamp(40px, 10.5vw, 60px);
+    line-height: 1;
+    letter-spacing: -0.065em;
+  }
+
+  .hero h1 br {
+    display: none;
+  }
+
+  .heroText {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .heroActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .heroActions a {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  .heroProof {
+    align-items: flex-start;
+    margin-top: 28px;
+  }
+
+  .heroProof strong {
+    font-size: 11px;
+  }
+
+  .heroProof small {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  /* Phone mockup */
+  .heroVisual {
+    min-height: 490px;
+    margin-top: 8px;
+  }
+
+  .phone {
+    width: min(248px, 68vw);
+    height: 460px;
+    padding: 9px;
+    border-radius: 34px;
+  }
+
+  .phoneScreen {
+    padding: 38px 16px 16px;
+    border-radius: 27px;
+  }
+
+  .businessMark {
+    width: 60px;
+    height: 60px;
+    margin: 30px auto 16px;
+    border-radius: 19px;
+    font-size: 25px;
+  }
+
+  .phoneScreen h3 {
+    font-size: 19px;
+  }
+
+  .ratingRow {
+    font-size: 18px;
+  }
+
+  .experiencePill {
+    padding: 9px 10px;
+    font-size: 10px;
+  }
+
+  /* Floating cards */
+  .floatingCard {
+    max-width: 175px;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 13px;
+  }
+
+  .floatingCard strong {
+    font-size: 10px;
+  }
+
+  .floatingCard small {
+    font-size: 8px;
+    line-height: 1.35;
+  }
+
+  .cardIcon {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .scanCard {
+    left: 0;
+    top: 21%;
+  }
+
+  .aiCard {
+    right: 0;
+    bottom: 16%;
+  }
+
+  /* Benefits marquee */
+  .marquee {
+    min-height: 54px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .marquee span:nth-of-type(3),
+  .marquee i:nth-of-type(3) {
+    display: none;
+  }
+
+  /* Section headings */
+  .section {
+    padding: 76px 0;
+  }
+
+  .sectionHeading {
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+
+  .sectionHeading h2,
+  .storyCopy h2,
+  .featureIntro h2,
+  .googleCopy h2,
+  .ctaSection h2 {
+    margin-top: 12px;
+    font-size: clamp(32px, 8.5vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.055em;
+  }
+
+  .sectionHeading p,
+  .storyCopy p,
+  .featureIntro p,
+  .googleCopy p,
+  .ctaSection p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* Review flow */
+  .flow {
+    border-radius: 20px;
+  }
+
+  .flowRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flowStep {
+    min-width: 0;
+    padding: 15px 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .flowStep:nth-child(2) {
+    border-right: 0;
+  }
+
+  .flowStep:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .flowStep strong {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .flowPanel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    min-height: 0;
+    padding: 22px 16px 18px;
+  }
+
+  .flowPanelText {
+    max-width: none;
+  }
+
+  .flowPanelText h3 {
+    font-size: clamp(28px, 7vw, 38px);
+    line-height: 1.05;
+  }
+
+  .flowPanelText p {
+    font-size: 13px;
+  }
+
+  .flowMockup {
+    width: 100%;
+    min-width: 0;
+    min-height: 290px;
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .qrCode {
+    width: 118px;
+    height: 118px;
+  }
+
+  .bigStars {
+    font-size: 25px;
+    letter-spacing: 2px;
+  }
+
+  /* Customer story */
+  .storySection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 0 0 76px;
+  }
+
+  .storyImage {
+    min-height: 340px;
+    border-radius: 22px;
+  }
+
+  .imageOverlay {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    gap: 12px;
+    padding: 13px;
+  }
+
+  .imageOverlay strong {
+    font-size: 11px;
+  }
+
+  .checkList {
+    margin-top: 22px;
+  }
+
+  .checkList div {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 13px 0;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .checkList span {
+    flex: 0 0 22px;
+    margin-right: 0;
+  }
+
+  /* Feature cards */
+  .featureSection {
+    padding-bottom: 76px;
+  }
+
+  .featureIntro {
+    margin-bottom: 28px;
+  }
+
+  .featureGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .featureCard,
+  .featureCard:last-child {
+    grid-column: auto;
+    min-width: 0;
+    border-radius: 20px;
+  }
+
+  .featureVisual {
+    height: 230px;
+  }
+
+  .signalLines {
+    width: min(300px, 85vw);
+    height: min(300px, 85vw);
+  }
+
+  .featureBody {
+    padding: 20px;
+  }
+
+  .featureBody h3 {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  .featureBody p {
+    font-size: 13px;
+  }
+
+  .miniDashboard {
+    width: min(80%, 260px);
+    padding: 18px;
+  }
+
+  /* Google review journey */
+  .googleSection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    padding: 36px 20px;
+    border-radius: 24px;
+  }
+
+  .googlePath {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .pathNode {
+    min-width: 0;
+    padding: 3px 0;
+  }
+
+  .pathNode strong {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  .pathNode small {
+    max-width: 260px;
+    font-size: 10px;
+  }
+
+  .pathLine {
+    width: 1px;
+    height: 22px;
+    margin: 8px 0 8px 4px;
+    background: linear-gradient(180deg,
+        #53624f,
+        transparent);
+  }
+
+  /* Call to action */
+  .ctaSection {
+    margin: 76px auto;
+    padding: 58px 8px;
+  }
+
+  .ctaSection h2 {
+    font-size: clamp(34px, 9vw, 48px);
+  }
+
+  .ctaSection p {
+    margin: 18px auto 24px;
+  }
+
+  .ctaSection .primaryButton {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 42px 20px 22px;
+  }
+
+  .footerTop {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-bottom: 34px;
+  }
+
+  .footerLinks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+
+  .footerLinks div {
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .footerLinks a {
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+
+  .footerBottom {
+    flex-direction: column;
+    gap: 10px;
+    line-height: 1.5;
+  }
+}
+
+/* =========================
+   VERY NARROW PHONES
+========================= */
+
+@media (max-width: 380px) {
+
+  .nav,
+  .hero,
+  .section,
+  .storySection,
+  .featureSection,
+  .googleSection,
+  .ctaSection {
+    width: calc(100% - 24px);
+  }
+
+  .brand {
+    font-size: 12px;
+  }
+
+  .navCta {
+    padding: 0 9px;
+    font-size: 10px;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 10.5vw, 42px);
+  }
+
+  .heroVisual {
+    min-height: 440px;
+  }
+
+  .phone {
+    width: 215px;
+    height: 420px;
+  }
+
+  .floatingCard {
+    max-width: 145px;
+    padding: 8px;
+  }
+
+  .floatingCard small {
+    display: none;
+  }
+
+  .flowPanel {
+    padding: 18px 12px;
+  }
+
+  .googleSection {
+    padding: 30px 16px;
+  }
+
+  .footerLinks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* =========================
+   LANDSCAPE PHONES
+========================= */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 0.8fr);
+    align-items: center;
+  }
+
+  .heroContent {
+    padding: 30px 0;
+  }
+
+  .heroVisual {
+    min-height: 420px;
+  }
+
+  .phone {
+    width: 210px;
+    height: 390px;
+  }
+}
+
+/* =========================
+   REDUCED MOTION ACCESSIBILITY
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .page *,
+  .page *::before,
+  .page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

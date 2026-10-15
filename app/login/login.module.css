@@ -1,6 +1,12 @@
+/* =================================================
+   PAGE
+================================================= */
+
 .page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,6 +14,14 @@
   overflow: hidden;
   background: #f7f8f5;
   color: #1d3824;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
 }
 
 .backgroundGlow {
@@ -20,6 +34,7 @@
   background: rgba(93, 139, 103, 0.12);
   filter: blur(80px);
   pointer-events: none;
+  z-index: -1;
 }
 
 .container {
@@ -27,11 +42,13 @@
   z-index: 1;
   width: 100%;
   max-width: 430px;
+  min-width: 0;
+  margin: auto;
 }
 
-/* -------------------------------------------------
+/* =================================================
    BRAND
-------------------------------------------------- */
+================================================= */
 
 .brandSection {
   text-align: center;
@@ -41,32 +58,28 @@
 .brand {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .logoBox {
   width: 46px;
   height: 46px;
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 5px;
-
   border: 1px solid rgba(29, 56, 36, 0.18);
   border-radius: 13px;
-
   background: rgba(255, 255, 255, 0.78);
-
-  box-shadow:
-    0 5px 18px rgba(29, 56, 36, 0.08);
-
+  box-shadow: 0 5px 18px rgba(29, 56, 36, 0.08);
   overflow: hidden;
 }
 
@@ -93,23 +106,20 @@
   line-height: 1.5;
 }
 
-/* -------------------------------------------------
-   CARD
-------------------------------------------------- */
+/* =================================================
+   LOGIN CARD
+================================================= */
 
 .card {
   width: 100%;
+  min-width: 0;
   padding: 34px;
-
   border: 1px solid rgba(29, 56, 36, 0.10);
   border-radius: 22px;
-
-  background: rgba(255, 255, 255, 0.94);
-
-  box-shadow:
-    0 20px 60px rgba(29, 56, 36, 0.08);
-
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 60px rgba(29, 56, 36, 0.08);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .header {
@@ -123,63 +133,69 @@
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
 }
 
 .header p {
   margin: 8px 0 0;
   color: #788179;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* -------------------------------------------------
+/* =================================================
    FORM
-------------------------------------------------- */
+================================================= */
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
-.field label {
+.field label,
+.passwordHeader label {
   color: #344239;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.5;
 }
 
 .field input {
+  display: block;
   width: 100%;
+  min-width: 0;
   height: 48px;
-
   padding: 0 14px;
-
   border: 1px solid #d9ded9;
   border-radius: 11px;
-
   outline: none;
-
   background: #ffffff;
   color: #1d3824;
-
-  font-size: 15px;
-
+  font-family: inherit;
+  font-size: 16px;
+  line-height: normal;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
-
-  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .field input::placeholder {
   color: #a1aaa3;
+  opacity: 1;
 }
 
 .field input:hover {
@@ -189,42 +205,43 @@
 .field input:focus {
   border-color: #5c8b67;
   background: #ffffff;
-
-  box-shadow:
-    0 0 0 3px rgba(92, 139, 103, 0.12);
+  box-shadow: 0 0 0 3px rgba(92, 139, 103, 0.12);
 }
 
-/* -------------------------------------------------
+.field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* =================================================
    PASSWORD
-------------------------------------------------- */
+================================================= */
 
 .passwordHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .passwordHeader label {
-  color: #344239;
-  font-size: 14px;
-  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .forgotButton {
-  padding: 0;
-
+  flex-shrink: 0;
+  padding: 4px 0;
   border: 0;
   background: transparent;
-
   color: #4e7e5a;
-
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
+  line-height: 1.5;
   cursor: pointer;
-
   transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .forgotButton:hover {
@@ -234,69 +251,94 @@
 
 .passwordWrapper {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
 .passwordWrapper input {
-  padding-right: 68px;
+  padding-right: 72px;
 }
 
 .showButton {
   position: absolute;
   top: 50%;
-  right: 13px;
-
+  right: 12px;
   transform: translateY(-50%);
-
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 4px;
-
   border: 0;
+  border-radius: 6px;
   background: transparent;
-
   color: #6d776f;
-
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .showButton:hover {
   color: #1d3824;
 }
 
-/* -------------------------------------------------
+.showButton:focus-visible,
+.forgotButton:focus-visible,
+.signupButton:focus-visible,
+.brand:focus-visible {
+  outline: 2px solid #5c8b67;
+  outline-offset: 4px;
+}
+
+/* =================================================
+   ERROR MESSAGE
+================================================= */
+
+.errorMessage {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(180, 35, 24, 0.15);
+  border-radius: 9px;
+  background: #fff5f4;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* =================================================
    LOGIN BUTTON
-------------------------------------------------- */
+================================================= */
 
 .loginButton {
   width: 100%;
-  height: 50px;
-
+  min-width: 0;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-
   margin-top: 4px;
-
+  padding: 12px 16px;
   border: 0;
   border-radius: 11px;
-
   background: #1d3824;
   color: #ffffff;
-
+  font-family: inherit;
   font-size: 15px;
   font-weight: 600;
-
+  line-height: 1.4;
   cursor: pointer;
-
-  box-shadow:
-    0 8px 20px rgba(29, 56, 36, 0.16);
-
+  box-shadow: 0 8px 20px rgba(29, 56, 36, 0.16);
   transition:
     transform 0.2s ease,
     background 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .loginButton span {
@@ -304,48 +346,50 @@
   line-height: 1;
 }
 
-.loginButton:hover {
+.loginButton:hover:not(:disabled) {
   background: #294c32;
-
   transform: translateY(-1px);
-
-  box-shadow:
-    0 10px 24px rgba(29, 56, 36, 0.20);
+  box-shadow: 0 10px 24px rgba(29, 56, 36, 0.20);
 }
 
-.loginButton:active {
+.loginButton:active:not(:disabled) {
   transform: translateY(0);
 }
 
-/* -------------------------------------------------
+.loginButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+/* =================================================
    SIGNUP
-------------------------------------------------- */
+================================================= */
 
 .signupSection {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 5px;
-
   margin-top: 24px;
-
   color: #788179;
   font-size: 14px;
+  line-height: 1.6;
   text-align: center;
 }
 
 .signupButton {
-  padding: 0;
-
+  padding: 3px 2px;
   border: 0;
   background: transparent;
-
   color: #4e7e5a;
-
+  font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-
+  line-height: 1.6;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .signupButton:hover {
@@ -353,76 +397,223 @@
   text-decoration: underline;
 }
 
-/* -------------------------------------------------
+/* =================================================
    FOOTER
-------------------------------------------------- */
+================================================= */
 
 .footer {
   margin: 22px 0 0;
-
   color: #99a19b;
-
   font-size: 12px;
-  line-height: 1.5;
-
+  line-height: 1.6;
   text-align: center;
 }
 
-/* -------------------------------------------------
-   MOBILE
-------------------------------------------------- */
+/* =================================================
+   TABLETS
+================================================= */
 
-@media (max-width: 520px) {
+@media (max-width: 768px) {
   .page {
-    align-items: flex-start;
-    padding: 32px 16px;
+    padding: 36px 20px;
   }
 
   .container {
-    max-width: 100%;
+    max-width: 430px;
+  }
+
+  .card {
+    padding: 30px;
+  }
+}
+
+/* =================================================
+   MOBILE
+================================================= */
+
+@media (max-width: 520px) {
+  .page {
+    align-items: center;
+    padding: 28px 16px;
+  }
+
+  .container {
+    max-width: 430px;
   }
 
   .brandSection {
     margin-bottom: 22px;
   }
 
-  .card {
-    padding: 26px 20px;
-    border-radius: 18px;
+  .logoBox {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
   }
 
-  .header h1 {
+  .brandName {
     font-size: 24px;
   }
 
+  .tagline {
+    max-width: 300px;
+    margin: 10px auto 0;
+    font-size: 13px;
+  }
+
+  .card {
+    padding: 26px 22px;
+    border-radius: 18px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 25px;
+  }
+
+  .header p {
+    font-size: 13px;
+  }
+
+  .form {
+    gap: 18px;
+  }
+
   .signupSection {
-    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  .footer {
+    margin-top: 20px;
   }
 }
+
+/* =================================================
+   SMALL MOBILE PHONES
+================================================= */
 
 @media (max-width: 380px) {
   .page {
     padding: 24px 12px;
   }
 
+  .brandSection {
+    margin-bottom: 20px;
+  }
+
+  .logoBox {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brandName {
+    font-size: 23px;
+  }
+
+  .tagline {
+    font-size: 12px;
+  }
+
   .card {
-    padding: 22px 16px;
+    padding: 23px 17px;
+    border-radius: 16px;
+  }
+
+  .header h1 {
+    font-size: 23px;
+  }
+
+  .header p {
+    font-size: 13px;
   }
 
   .passwordHeader {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .passwordHeader label {
+    font-size: 13px;
   }
 
   .forgotButton {
     font-size: 12px;
   }
+
+  .field input {
+    height: 46px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .passwordWrapper input {
+    padding-right: 68px;
+  }
+
+  .showButton {
+    right: 8px;
+  }
+
+  .loginButton {
+    min-height: 48px;
+  }
+
+  .signupSection {
+    font-size: 13px;
+  }
+
+  .signupButton {
+    font-size: 13px;
+  }
+
+  .footer {
+    font-size: 11px;
+  }
 }
 
-/* -------------------------------------------------
+/* =================================================
+   VERY SHORT SCREENS / LANDSCAPE
+================================================= */
+
+@media (max-height: 650px) and (min-width: 521px) {
+  .page {
+    align-items: flex-start;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .brandSection {
+    margin-bottom: 18px;
+  }
+
+  .card {
+    padding-top: 26px;
+    padding-bottom: 26px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .signupSection {
+    margin-top: 18px;
+  }
+
+  .footer {
+    margin-top: 16px;
+  }
+}
+
+/* =================================================
    REDUCED MOTION
-------------------------------------------------- */
+================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -431,12 +622,8 @@
   .forgotButton {
     transition: none;
   }
-}
 
-.errorMessage {
-  margin: 0;
-  color: #b42318;
-  font-size: 13px;
-  line-height: 1.5;
+  .loginButton:hover:not(:disabled) {
+    transform: none;
+  }
 }
-

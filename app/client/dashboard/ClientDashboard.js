@@ -167,10 +167,8 @@ export default function ClientDashboard() {
       </header>
 
       {/* SIDEBAR */}
-            <aside
-        className={`${styles.sidebar} ${
-          mobileMenu ? styles.sidebarOpen : ""
-        }`}
+      <aside
+        className={`${styles.sidebar} ${mobileMenu ? styles.sidebarOpen : ""}`}
       >
         <Link href="/" className={styles.brand}>
           <span className={styles.logoBox}>
@@ -185,9 +183,11 @@ export default function ClientDashboard() {
             <Link
               key={item.id}
               href={item.href}
+              onClick={() => handleMenuClick(item.id)}
               className={`${styles.navItem} ${
-                item.id === "dashboard" ? styles.active : ""
+                item.id === activeMenu ? styles.active : ""
               }`}
+              aria-current={item.id === activeMenu ? "page" : undefined}
             >
               <span className={styles.navIcon}>{item.icon}</span>
               <span>{item.label}</span>

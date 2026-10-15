@@ -1169,3 +1169,559 @@
     letter-spacing: -0.5px;
   }
 }
+
+/* =================================================
+   RESPONSIVE CLIENT DASHBOARD
+   Append this block at the END of dashboard.module.css
+================================================= */
+
+/* Prevent unwanted horizontal scrolling */
+.dashboard,
+.dashboard * {
+  box-sizing: border-box;
+}
+
+.dashboard {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
+}
+
+.main {
+  min-width: 0;
+}
+
+.main img {
+  max-width: 100%;
+}
+
+/* =================================================
+   DESKTOP / MEDIUM SCREENS
+================================================= */
+
+@media (max-width: 1200px) {
+  .main {
+    padding: 36px 30px 48px;
+  }
+
+  .topBar {
+    gap: 20px;
+  }
+
+  .rechargeSection,
+  .qrSection {
+    min-width: 0;
+  }
+
+  .rechargeCard {
+    padding: 26px;
+  }
+
+  .rechargeBottom {
+    gap: 24px;
+  }
+}
+
+/* =================================================
+   TABLETS
+================================================= */
+
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 220px;
+    padding: 24px 15px;
+  }
+
+  .main {
+    margin-left: 220px;
+    padding: 32px 24px 44px;
+  }
+
+  .topBar {
+    margin-bottom: 32px;
+  }
+
+  .topBar h1 {
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  .businessName {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .rechargeCard {
+    padding: 24px;
+  }
+
+  .rechargeBottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .remainingContainer {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .remainingNumber {
+    font-size: 30px;
+  }
+
+  .rechargeButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .qrSection {
+    gap: 20px;
+    align-items: flex-start;
+  }
+}
+
+/* =================================================
+   MOBILE HEADER AND SIDEBAR
+================================================= */
+
+@media (max-width: 760px) {
+  .mobileHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+
+    width: 100%;
+    height: 66px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 0 20px;
+
+    background: #ffffff;
+    border-bottom: 1px solid #e7ece8;
+    box-shadow: 0 3px 12px rgba(26, 56, 35, 0.035);
+  }
+
+  .mobileBrand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    min-width: 0;
+
+    color: #173522;
+    font-size: 19px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .mobileBrand .logoBox {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dfe7e1;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #284c32;
+
+    font-family: inherit;
+    font-size: 23px;
+    line-height: 1;
+
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .menuButton:hover {
+    background: #f2f6f3;
+  }
+
+  .menuButton:focus-visible {
+    outline: 2px solid #5c8b67;
+    outline-offset: 3px;
+  }
+
+  /* Sidebar becomes a slide-in mobile drawer */
+  .sidebar {
+    position: fixed;
+    top: 66px;
+    left: 0;
+    bottom: 0;
+
+    width: min(280px, 85vw);
+    height: calc(100dvh - 66px);
+    height: calc(100vh - 66px);
+
+    padding: 22px 16px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    background: #ffffff;
+    border-right: 1px solid #e7ece8;
+
+    z-index: 190;
+
+    transform: translateX(-105%);
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+      transform 0.25s ease,
+      visibility 0.25s ease;
+
+    box-shadow: 10px 0 30px rgba(20, 50, 30, 0.08);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* Hide the desktop brand inside the drawer */
+  .sidebar .brand {
+    display: none;
+  }
+
+  .navigation {
+    gap: 6px;
+  }
+
+  .navItem {
+    min-height: 46px;
+    padding: 12px 13px;
+    font-size: 14px;
+  }
+
+  .sidebarBottom {
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+
+  .logoutButton {
+    min-height: 46px;
+  }
+
+  /* Main content uses the full viewport width */
+  .main {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+
+    padding: 96px 22px 36px;
+  }
+
+  .topBar {
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+
+  .topBar>div:first-child {
+    min-width: 0;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.3px;
+  }
+
+  .topBar h1 {
+    font-size: 28px;
+    line-height: 1.25;
+    letter-spacing: -0.7px;
+    overflow-wrap: anywhere;
+  }
+
+  .businessName {
+    max-width: 100%;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .profileCircle {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  /* Subscription section */
+  .rechargeSection {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 24px;
+  }
+
+  .sectionHeader {
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .sectionHeader h2,
+  .qrSection h2 {
+    font-size: 22px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .sectionHeader p,
+  .qrSection p {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .rechargeCard {
+    width: 100%;
+    min-width: 0;
+    padding: 24px;
+    border-radius: 17px;
+  }
+
+  .rechargeBottom {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .remainingContainer {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .remainingLabel {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .remainingNumber {
+    font-size: 32px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .remainingNumber span {
+    font-size: 14px;
+  }
+
+  .remainingContainer p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .rechargeButton {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  /* QR section */
+  .qrSection {
+    width: 100%;
+    min-width: 0;
+
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+
+    padding: 24px;
+    border-radius: 17px;
+  }
+
+  .qrSection>div {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .secondaryButton {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+}
+
+/* =================================================
+   SMALL MOBILE PHONES
+================================================= */
+
+@media (max-width: 480px) {
+  .mobileHeader {
+    height: 62px;
+    padding: 0 15px;
+  }
+
+  .mobileBrand {
+    gap: 8px;
+    font-size: 18px;
+  }
+
+  .mobileBrand .logoBox {
+    width: 36px;
+    height: 36px;
+  }
+
+  .menuButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar {
+    top: 62px;
+    height: calc(100dvh - 62px);
+    height: calc(100vh - 62px);
+  }
+
+  .main {
+    padding: 88px 15px 30px;
+  }
+
+  .topBar {
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .topBar h1 {
+    font-size: 25px;
+  }
+
+  .businessName {
+    font-size: 13px;
+  }
+
+  .profileCircle {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+  }
+
+  .sectionHeader h2,
+  .qrSection h2 {
+    font-size: 20px;
+  }
+
+  .rechargeCard {
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .remainingNumber {
+    font-size: 29px;
+  }
+
+  .qrSection {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .sectionEyebrow {
+    font-size: 10px;
+  }
+}
+
+/* =================================================
+   EXTRA SMALL PHONES
+================================================= */
+
+@media (max-width: 360px) {
+  .mobileHeader {
+    padding: 0 12px;
+  }
+
+  .main {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .topBar h1 {
+    font-size: 23px;
+  }
+
+  .rechargeCard {
+    padding: 17px;
+  }
+
+  .remainingNumber {
+    font-size: 27px;
+  }
+
+  .qrSection {
+    padding: 17px;
+  }
+
+  .sectionHeader h2,
+  .qrSection h2 {
+    font-size: 19px;
+  }
+
+  .rechargeButton,
+  .secondaryButton {
+    padding-right: 12px;
+    padding-left: 12px;
+    font-size: 13px;
+  }
+}
+
+/* =================================================
+   SHORT SCREENS / LANDSCAPE
+================================================= */
+
+@media (max-height: 500px) and (max-width: 760px) {
+  .sidebar {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .navigation {
+    gap: 3px;
+  }
+
+  .navItem {
+    min-height: 40px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  .sidebarBottom {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+}
+
+/* =================================================
+   ACCESSIBILITY
+================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}
