@@ -20,6 +20,8 @@
 # production
 /build
 
+#remotion
+/my-video/
 # misc
 .DS_Store
 *.pem
