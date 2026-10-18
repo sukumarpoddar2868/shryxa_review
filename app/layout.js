@@ -12,8 +12,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Shryxa Review",
-  description: "AI Ineterated Review System",
+  metadataBase: new URL("https://shryxa-review.vercel.app"),
+  title: "Shryxa Review | Google Review QR Code & AI Tool",
+  description:
+    "Help customers share genuine Google reviews with business-specific QR codes and AI-assisted writing suggestions. Get started with Shryxa Review.",
 };
 
 export default function RootLayout({ children }) {
