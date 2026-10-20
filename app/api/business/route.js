@@ -2,9 +2,59 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 
+const ALLOWED_GOOGLE_HOSTS = new Set([
+  "google.com",
+  "www.google.com",
+  "maps.google.com",
+  "maps.app.goo.gl",
+]);
+
+/**
+ * Validate supported Google Maps / Google Review URLs.
+ * Returns the original URL with surrounding whitespace removed.
+ * Does not resolve short links or rewrite URLs.
+ */
+function validateGoogleReviewUrl(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return {
+      valid: false,
+      error: "Google Review URL is required.",
+    };
+  }
+
+  const originalUrl = value.trim();
+
+  try {
+    const parsedUrl = new URL(originalUrl);
+
+    if (
+      parsedUrl.protocol !== "https:" ||
+      !ALLOWED_GOOGLE_HOSTS.has(parsedUrl.hostname) ||
+      parsedUrl.username ||
+      parsedUrl.password ||
+      parsedUrl.port
+    ) {
+      return {
+        valid: false,
+        error:
+          "Use a valid HTTPS Google Maps or Google Review URL, including maps.app.goo.gl short links.",
+      };
+    }
+
+    return {
+      valid: true,
+      url: originalUrl,
+    };
+  } catch {
+    return {
+      valid: false,
+      error: "Please enter a valid Google Review URL.",
+    };
+  }
+}
+
 export async function GET() {
   try {
-    // 1. Authenticate the user.
     const session = await auth();
 
     if (!session?.user?.id) {
@@ -14,7 +64,6 @@ export async function GET() {
       );
     }
 
-    // 2. Get the owner ID from the trusted session.
     const ownerId = Number(session.user.id);
 
     if (!Number.isSafeInteger(ownerId) || ownerId <= 0) {
@@ -24,7 +73,6 @@ export async function GET() {
       );
     }
 
-    // 3. Fetch only businesses belonging to this user.
     const businesses = await prisma.business.findMany({
       where: { ownerId },
       orderBy: { createdAt: "desc" },
@@ -79,7 +127,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    // 1. Get the authenticated user's session.
     const session = await auth();
 
     if (!session?.user?.id) {
@@ -89,7 +136,6 @@ export async function POST(request) {
       );
     }
 
-    // 2. Get the owner ID from the trusted session.
     const ownerId = Number(session.user.id);
 
     if (!Number.isSafeInteger(ownerId) || ownerId <= 0) {
@@ -99,20 +145,33 @@ export async function POST(request) {
       );
     }
 
-    // 3. Read business details from the request.
-    const data = await request.json();
+    let data;
+
+    try {
+      data = await request.json();
+    } catch {
+      return NextResponse.json(
+        { message: "Invalid JSON request body." },
+        { status: 400 },
+      );
+    }
 
     const { shopName, ownerName, phone, address, pinCode, googleReviewUrl } =
-      data;
+      data ?? {};
 
-    // 4. Validate required fields.
     if (
-      !shopName ||
-      !ownerName ||
-      !phone ||
-      !address ||
-      !pinCode ||
-      !googleReviewUrl
+      typeof shopName !== "string" ||
+      !shopName.trim() ||
+      typeof ownerName !== "string" ||
+      !ownerName.trim() ||
+      typeof phone !== "string" ||
+      !phone.trim() ||
+      typeof address !== "string" ||
+      !address.trim() ||
+      typeof pinCode !== "string" ||
+      !pinCode.trim() ||
+      typeof googleReviewUrl !== "string" ||
+      !googleReviewUrl.trim()
     ) {
       return NextResponse.json(
         { message: "All business fields are required." },
@@ -120,7 +179,31 @@ export async function POST(request) {
       );
     }
 
-    // 5. Confirm the authenticated user still exists.
+    if (!/^\d{6}$/.test(pinCode.trim())) {
+      return NextResponse.json(
+        { message: "PIN code must contain exactly 6 digits." },
+        { status: 400 },
+      );
+    }
+
+    const normalizedPhone = phone.trim().replace(/^\+91/, "");
+
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+      return NextResponse.json(
+        { message: "Please enter a valid Indian mobile number." },
+        { status: 400 },
+      );
+    }
+
+    const urlValidation = validateGoogleReviewUrl(googleReviewUrl);
+
+    if (!urlValidation.valid) {
+      return NextResponse.json(
+        { message: urlValidation.error },
+        { status: 400 },
+      );
+    }
+
     const owner = await prisma.user.findUnique({
       where: { id: ownerId },
       select: { id: true },
@@ -133,16 +216,17 @@ export async function POST(request) {
       );
     }
 
-    // 6. Create the business under the authenticated user.
     const business = await prisma.business.create({
       data: {
         ownerId: owner.id,
-        shopName,
-        ownerName,
-        phone,
-        address,
-        pinCode,
-        googleReviewUrl,
+        shopName: shopName.trim(),
+        ownerName: ownerName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        pinCode: pinCode.trim(),
+
+        // Preserve the supplied URL; do not expand short links.
+        googleReviewUrl: urlValidation.url,
       },
     });
 
@@ -232,37 +316,23 @@ export async function PATCH(request) {
       );
     }
 
-    if (!/^[6-9]\d{9}$/.test(data.phone.replace(/^\+91/, ""))) {
+    const normalizedPhone = data.phone.replace(/^\+91/, "");
+
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
       return NextResponse.json(
         { error: "Please enter a valid Indian mobile number." },
         { status: 400 },
       );
     }
 
-    let parsedUrl;
+    const urlValidation = validateGoogleReviewUrl(data.googleReviewUrl);
 
-    try {
-      parsedUrl = new URL(data.googleReviewUrl);
-    } catch {
-      return NextResponse.json(
-        { error: "Please enter a valid Google Review URL." },
-        { status: 400 },
-      );
+    if (!urlValidation.valid) {
+      return NextResponse.json({ error: urlValidation.error }, { status: 400 });
     }
 
-    if (
-      parsedUrl.protocol !== "https:" ||
-      !["google.com", "www.google.com", "maps.google.com"].includes(
-        parsedUrl.hostname,
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error: "Use a valid HTTPS Google Maps or Google Review URL.",
-        },
-        { status: 400 },
-      );
-    }
+    // Store the customer's original URL.
+    data.googleReviewUrl = urlValidation.url;
 
     const existingBusiness = await prisma.business.findFirst({
       where: {
