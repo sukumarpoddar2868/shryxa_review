@@ -1,7 +1,7 @@
 "use client";
 import { createSubscriptionRequest } from "@/lib/services/subscriptionClient";
 import { signIn } from "next-auth/react";
-import GetGoogleReviewLink from "@/app/components/GetGoogleReviewLink";
+// import GetGoogleReviewLink from "@/app/components/GetGoogleReviewLink";
 import { createBusiness } from "@/lib/services/businessService";
 import { createAccount } from "@/lib/services/accountService";
 import { useEffect,useState } from "react";
@@ -745,7 +745,7 @@ async function downloadStandeePDF(format) {
                       Google Review Page URL
                     </label>
 
-                    <GetGoogleReviewLink
+                    {/* <GetGoogleReviewLink
                       shopName={form.shopName}
                       address={form.address}
                       onUrlFound={(url) =>
@@ -754,7 +754,7 @@ async function downloadStandeePDF(format) {
                           googleReviewUrl: url,
                         }))
                       }
-                    />
+                    /> */}
                   </div>
 
                   <input
