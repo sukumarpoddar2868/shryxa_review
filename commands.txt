@@ -4,3 +4,14 @@
 
 
 psql "host=shryxa-review-db-mumbai.c3yiamq2ykzf.ap-south-1.rds.amazonaws.com port=5432 dbname=postgres user=shryxa_admin sslmode=require"
+
+Test Accounts:
+1. With Standee order
+ email: sushil90@gmail.com
+
+
+2. Without Standee only subscription
+ email: sushilpoddar90@gmail.com
+
+
+map url: https://www.google.com/maps/place/Chaibasa,+Jharkhand/@22.5493141,85.7833233,14z/data=!3m1!4b1!4m6!3m5!1s0x3a1e27763d261b3b:0x2f74b3e3ac79f64d!8m2!3d22.5474364!4d85.8025373!16zL20vMDVwOW16?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D

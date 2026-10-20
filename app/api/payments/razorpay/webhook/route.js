@@ -33,17 +33,40 @@ function unixToDate(timestamp) {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-const subscriptionStatusMap = {
-  "subscription.authenticated": "AUTHENTICATED",
-  "subscription.activated": "ACTIVE",
-  "subscription.charged": "ACTIVE",
-  "subscription.pending": "PENDING",
-  "subscription.halted": "HALTED",
-  "subscription.cancelled": "CANCELLED",
-  "subscription.completed": "COMPLETED",
-  "subscription.paused": "PAUSED",
-  "subscription.resumed": "ACTIVE",
-};
+function getSubscriptionStatus(event, subscriptionEntity) {
+  const actualStatus = subscriptionEntity?.status?.toLowerCase();
+
+  const statusMap = {
+    created: "CREATED",
+    authenticated: "ACTIVE",
+    active: "ACTIVE",
+    pending: "PENDING",
+    halted: "HALTED",
+    cancelled: "CANCELLED",
+    completed: "COMPLETED",
+    paused: "PAUSED",
+  };
+
+  // Prefer the actual status in Razorpay's subscription entity.
+  if (actualStatus && statusMap[actualStatus]) {
+    return statusMap[actualStatus];
+  }
+
+  // Fallback for events without a usable subscription status.
+  const eventStatusMap = {
+    "subscription.authenticated": "AUTHENTICATED",
+    "subscription.activated": "ACTIVE",
+    "subscription.charged": "ACTIVE",
+    "subscription.pending": "PENDING",
+    "subscription.halted": "HALTED",
+    "subscription.cancelled": "CANCELLED",
+    "subscription.completed": "COMPLETED",
+    "subscription.paused": "PAUSED",
+    "subscription.resumed": "ACTIVE",
+  };
+
+  return eventStatusMap[event] ?? null;
+}
 
 export async function POST(request) {
   try {
@@ -303,7 +326,7 @@ export async function POST(request) {
     }
 
     // 7. Update subscription state and billing dates.
-    const newStatus = subscriptionStatusMap[event];
+    const newStatus = getSubscriptionStatus(event, subscriptionEntity);
 
     if (newStatus) {
       const updateData = { status: newStatus };
